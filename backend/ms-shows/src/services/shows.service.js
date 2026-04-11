@@ -200,8 +200,33 @@ async function getFullShow(tvmazeId) {
 
   return {
     show,
-    seasons,
-    cast
+    seasons: seasons.seasons,
+    cast: cast.cast
+  };
+}
+
+async function getHome(limit = 10) {
+  const [featured, topRated, recent, ended] = await Promise.all([
+    showsRepository.getFeatured(limit),
+    showsRepository.getTopRated(limit),
+    showsRepository.getRecent(limit),
+    showsRepository.getByStatus('Ended', limit)
+  ]);
+
+  return {
+    featured: featured.map(show => toShowResponse(show)),
+    topRated: topRated.map(show => toShowResponse(show)),
+    recent: recent.map(show => toShowResponse(show)),
+    ended: ended.map(show => toShowResponse(show))
+  };
+}
+
+async function getShowsByGenre(genre, limit = 10) {
+  const shows = await showsRepository.getShowsByGenre(genre, limit);
+
+  return {
+    genre,
+    results: shows.map(show => toShowResponse(show))
   };
 }
 
@@ -214,5 +239,7 @@ module.exports = {
   getShowCast,
   getEpisodeBySeasonAndNumber,
   getSeasonByNumber,
-  getFullShow
+  getFullShow,
+  getHome,
+  getShowsByGenre
 };

@@ -41,6 +41,8 @@ async function getSeasonsByShowId(showId) {
   const response = await api.get(`/shows/${showId}/seasons`);
   return response.data;
 }
+
+
 module.exports = {
   getShowById,
   searchShows,

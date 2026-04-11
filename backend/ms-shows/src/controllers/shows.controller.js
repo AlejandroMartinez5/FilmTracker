@@ -221,6 +221,67 @@ async function getFullShow(req, res) {
   }
 }
 
+async function getHome(req, res) {
+  try {
+    const { limit } = req.query;
+
+    const numericLimit = Number(limit) || 10;
+
+    if (!Number.isInteger(numericLimit) || numericLimit <= 0) {
+      return res.status(400).json({
+        message: 'El parámetro limit debe ser un número entero mayor a 0'
+      });
+    }
+
+    const result = await showsService.getHome(numericLimit);
+
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: 'Error al obtener el home de series',
+      error: error.message
+    });
+  }
+}
+
+async function getShowsByGenre(req, res) {
+  try {
+    const { genre } = req.params;
+    const { limit } = req.query;
+
+    if (!genre || !genre.trim()) {
+      return res.status(400).json({
+        message: 'El género es obligatorio'
+      });
+    }
+
+    let numericLimit = Number(limit) || 10;
+    const MAX_LIMIT = 20;
+
+    if (!Number.isInteger(numericLimit) || numericLimit <= 0) {
+      return res.status(400).json({
+        message: 'El parámetro limit debe ser un número entero mayor a 0'
+      });
+    }
+
+    if (numericLimit > MAX_LIMIT) {
+      numericLimit = MAX_LIMIT;
+    }
+
+    const result = await showsService.getShowsByGenre(
+      genre.trim(),
+      numericLimit
+    );
+
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: 'Error al obtener series por género',
+      error: error.message
+    });
+  }
+}
+
 module.exports = {
   getShowById,
   getSeasonsByShowId,
@@ -230,5 +291,7 @@ module.exports = {
   getShowCast,
   getEpisodeBySeasonAndNumber,
   getSeasonByNumber,
-  getFullShow
+  getFullShow,
+  getHome,
+  getShowsByGenre
 };

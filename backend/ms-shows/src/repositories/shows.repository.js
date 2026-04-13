@@ -20,7 +20,7 @@ async function getFeatured(limit = 10) {
   return Show.find({
     'image.medium': { $ne: null }
   })
-    .sort({ 'rating.average': -1 })
+    .sort({ tvmazeId: 1 })
     .limit(limit);
 }
 
@@ -41,7 +41,12 @@ async function getRecent(limit = 10) {
 }
 
 async function getByStatus(status, limit = 10) {
-  return Show.find({ status }).limit(limit);
+  return Show.find({
+    status,
+    averageRuntime: { $ne: null }
+})
+    .sort({ averageRuntime: 1 })
+    .limit(limit);
 }
 
 async function getShowsByGenre(genre, limit = 10) {

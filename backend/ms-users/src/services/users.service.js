@@ -161,9 +161,27 @@ const checkUsernameAvailability = async (username) => {
   };
 };
 
+const searchUsers = async (query) => {
+  if (!query || !query.trim()) {
+    return [];
+  }
+
+  const q = query.trim();
+
+  const users = await usersRepository.searchUsers(q);
+
+  return users.map(user => ({
+    id: user._id,
+    name: user.name,
+    username: user.username,
+    profileImage: user.profileImage
+  }));
+};
+
 module.exports = {
   createInitialProfile,
   getProfile,
   updateProfile,
-  checkUsernameAvailability
+  checkUsernameAvailability,
+  searchUsers
 };

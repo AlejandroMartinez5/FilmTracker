@@ -20,10 +20,28 @@ const updateUserById = async (id, data) => {
   return User.findByIdAndUpdate(id, data, { new: true });
 };
 
+const searchUsers = async (query) => {
+  return User.find({
+    $or: [
+      { name: { $regex: query, $options: "i" } },
+      { username: { $regex: query, $options: "i" } }
+    ]
+  })
+    .select("_id name username profileImage")
+    .limit(20);
+};
+
+const findByUsernamePublic = async (username) => {
+  return User.findOne({ username })
+    .select("_id name username profileImage createdAt");
+};
+
 module.exports = {
   createUser,
   findByAuthId,
   findByEmail,
   findByUsername,
-  updateUserById
+  updateUserById,
+  searchUsers,
+  findByUsernamePublic
 };

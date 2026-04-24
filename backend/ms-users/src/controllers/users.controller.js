@@ -22,6 +22,23 @@ const getProfile = async (req, res) => {
   }
 };
 
+const searchUsers = async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    const users = await usersService.searchUsers(q);
+
+    return res.status(200).json({
+      message: "Usuarios encontrados",
+      data: users
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
+    });
+  }
+};
+
 const updateProfile = async (req, res) => {
   try {
     const authId = req.user.authId;
@@ -47,5 +64,6 @@ const updateProfile = async (req, res) => {
 module.exports = {
   healthCheck,
   getProfile,
-  updateProfile
+  updateProfile,
+  searchUsers
 };

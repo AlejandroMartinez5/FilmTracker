@@ -4,19 +4,50 @@ const { signToken } = require("../utils/jwt.util");
 const { publishUserCreated } = require("../utils/broker.util");
 const { requestUsernameAvailability } = require("../utils/username-check.util");
 
+const usernameRegex = /^[a-zA-Z0-9._]{3,30}$/;
+
+const isValidUrl = (value) => {
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const register = async ({ email, password, name, username, profileImage }) => {
-  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedEmail = email?.trim().toLowerCase();
   const normalizedName = name?.trim();
   const normalizedUsername = username?.trim().toLowerCase();
 
-  if (!normalizedName) {
-    const error = new Error("El nombre es obligatorio");
+  if (!normalizedEmail || !password || !normalizedName || !normalizedUsername) {
+    const error = new Error("email, password, name y username son obligatorios");
     error.status = 400;
     throw error;
   }
 
-  if (!normalizedUsername) {
-    const error = new Error("El username es obligatorio");
+  if (password.length < 6) {
+    const error = new Error("La contraseña debe tener al menos 6 caracteres");
+    error.status = 400;
+    throw error;
+  }
+
+  if (normalizedName.length < 2 || normalizedName.length > 40) {
+    const error = new Error("El nombre debe tener entre 2 y 40 caracteres");
+    error.status = 400;
+    throw error;
+  }
+
+  if (!usernameRegex.test(normalizedUsername)) {
+    const error = new Error(
+      "El username debe tener entre 3 y 30 caracteres y solo puede contener letras, números, punto o guion bajo"
+    );
+    error.status = 400;
+    throw error;
+  }
+
+  if (profileImage && !isValidUrl(profileImage)) {
+    const error = new Error("La imagen de perfil debe ser una URL válida");
     error.status = 400;
     throw error;
   }
@@ -61,7 +92,13 @@ const register = async ({ email, password, name, username, profileImage }) => {
 };
 
 const login = async ({ email, password }) => {
-  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedEmail = email?.trim().toLowerCase();
+
+  if (!normalizedEmail || !password) {
+    const error = new Error("email y password son obligatorios");
+    error.status = 400;
+    throw error;
+  }
 
   const user = await repository.findByEmail(normalizedEmail);
   if (!user) {

@@ -1,5 +1,64 @@
 const usersRepository = require("../repositories/users.repository");
 
+const usernameRegex = /^[a-zA-Z0-9._]{3,30}$/;
+
+const isValidUrl = (value) => {
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const validateName = (name) => {
+  const normalizedName = name?.trim();
+
+  if (!normalizedName) {
+    const error = new Error("El nombre es obligatorio");
+    error.status = 400;
+    throw error;
+  }
+
+  if (normalizedName.length < 2 || normalizedName.length > 40) {
+    const error = new Error("El nombre debe tener entre 2 y 40 caracteres");
+    error.status = 400;
+    throw error;
+  }
+
+  return normalizedName;
+};
+
+const validateUsername = (username) => {
+  const normalizedUsername = username?.trim().toLowerCase();
+
+  if (!normalizedUsername) {
+    const error = new Error("El username es obligatorio");
+    error.status = 400;
+    throw error;
+  }
+
+  if (!usernameRegex.test(normalizedUsername)) {
+    const error = new Error(
+      "El username debe tener entre 3 y 30 caracteres y solo puede contener letras, números, punto o guion bajo"
+    );
+    error.status = 400;
+    throw error;
+  }
+
+  return normalizedUsername;
+};
+
+const validateProfileImage = (profileImage) => {
+  if (profileImage && !isValidUrl(profileImage)) {
+    const error = new Error("La imagen de perfil debe ser una URL válida");
+    error.status = 400;
+    throw error;
+  }
+
+  return profileImage || null;
+};
+
 const createInitialProfile = async ({
   authId,
   email,
@@ -15,20 +74,9 @@ const createInitialProfile = async ({
   }
 
   const normalizedEmail = email.trim().toLowerCase();
-  const normalizedName = name.trim();
-  const normalizedUsername = username.trim().toLowerCase();
-
-  if (!normalizedName) {
-    const error = new Error("El nombre es obligatorio");
-    error.status = 400;
-    throw error;
-  }
-
-  if (!normalizedUsername) {
-    const error = new Error("El username es obligatorio");
-    error.status = 400;
-    throw error;
-  }
+  const normalizedName = validateName(name);
+  const normalizedUsername = validateUsername(username);
+  const normalizedProfileImage = validateProfileImage(profileImage);
 
   const existingByAuthId = await usersRepository.findByAuthId(authId);
   if (existingByAuthId) {
@@ -53,7 +101,7 @@ const createInitialProfile = async ({
     role,
     name: normalizedName,
     username: normalizedUsername,
-    profileImage
+    profileImage: normalizedProfileImage
   });
 
   return user;
@@ -94,25 +142,11 @@ const updateProfile = async (authId, { name, username, profileImage }) => {
   const updateData = {};
 
   if (name !== undefined) {
-    const normalizedName = name.trim();
-
-    if (!normalizedName) {
-      const error = new Error("El nombre no puede estar vacío");
-      error.status = 400;
-      throw error;
-    }
-
-    updateData.name = normalizedName;
+    updateData.name = validateName(name);
   }
 
   if (username !== undefined) {
-    const normalizedUsername = username.trim().toLowerCase();
-
-    if (!normalizedUsername) {
-      const error = new Error("El username no puede estar vacío");
-      error.status = 400;
-      throw error;
-    }
+    const normalizedUsername = validateUsername(username);
 
     const existingUser = await usersRepository.findByUsername(normalizedUsername);
 
@@ -126,7 +160,7 @@ const updateProfile = async (authId, { name, username, profileImage }) => {
   }
 
   if (profileImage !== undefined) {
-    updateData.profileImage = profileImage;
+    updateData.profileImage = validateProfileImage(profileImage);
   }
 
   const updatedUser = await usersRepository.updateUserById(user._id, updateData);
@@ -146,13 +180,7 @@ const updateProfile = async (authId, { name, username, profileImage }) => {
 };
 
 const checkUsernameAvailability = async (username) => {
-  const normalizedUsername = username?.trim().toLowerCase();
-
-  if (!normalizedUsername) {
-    const error = new Error("El username es obligatorio");
-    error.status = 400;
-    throw error;
-  }
+  const normalizedUsername = validateUsername(username);
 
   const existingUser = await usersRepository.findByUsername(normalizedUsername);
 
@@ -170,7 +198,7 @@ const searchUsers = async (query) => {
 
   const users = await usersRepository.searchUsers(q);
 
-  return users.map(user => ({
+  return users.map((user) => ({
     id: user._id,
     name: user.name,
     username: user.username,
@@ -178,10 +206,31 @@ const searchUsers = async (query) => {
   }));
 };
 
+const getPublicProfileByUsername = async (username) => {
+  const normalizedUsername = validateUsername(username);
+
+  const user = await usersRepository.findByUsernamePublic(normalizedUsername);
+
+  if (!user) {
+    const error = new Error("Usuario no encontrado");
+    error.status = 404;
+    throw error;
+  }
+
+  return {
+    id: user._id,
+    name: user.name,
+    username: user.username,
+    profileImage: user.profileImage,
+    createdAt: user.createdAt
+  };
+};
+
 module.exports = {
   createInitialProfile,
   getProfile,
   updateProfile,
   checkUsernameAvailability,
-  searchUsers
+  searchUsers,
+  getPublicProfileByUsername
 };

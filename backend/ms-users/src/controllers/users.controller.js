@@ -61,9 +61,27 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const getPublicProfileByUsername = async (req, res) => {
+  try {
+    const { username } = req.params;
+
+    const profile = await usersService.getPublicProfileByUsername(username);
+
+    return res.status(200).json({
+      message: "Perfil público obtenido correctamente",
+      data: profile
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
+    });
+  }
+};
+
 module.exports = {
   healthCheck,
   getProfile,
   updateProfile,
-  searchUsers
+  searchUsers,
+  getPublicProfileByUsername
 };

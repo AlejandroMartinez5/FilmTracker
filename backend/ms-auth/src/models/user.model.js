@@ -1,9 +1,22 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
+    authId: {
+      type: String,
+      required: true,
+      unique: true
+    },
     name: {
       type: String,
+      required: true,
+      trim: true
+    },
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
       trim: true
     },
     email: {
@@ -12,10 +25,6 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true
-    },
-    passwordHash: {
-      type: String,
-      required: true
     },
     profileImage: {
       type: String,
@@ -27,8 +36,8 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['USER', 'ADMIN'],
-      default: 'USER'
+      enum: ["USER", "ADMIN"],
+      default: "USER"
     }
   },
   {
@@ -36,4 +45,4 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);

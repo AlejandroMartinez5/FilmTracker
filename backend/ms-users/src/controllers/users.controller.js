@@ -1,38 +1,45 @@
 const usersService = require("../services/users.service");
 
-const healthCheck = (req, res) => {
-  res.json({ status: "ok" });
+const healthCheck = async (req, res) => {
+  return res.status(200).json({
+    message: "ms-users funcionando 🚀"
+  });
 };
 
 const getProfile = async (req, res) => {
   try {
-    const { authId } = req.user;
+    const authId = req.user.authId;
     const profile = await usersService.getProfile(authId);
 
-    res.status(200).json(profile);
+    return res.status(200).json({
+      message: "Perfil obtenido correctamente",
+      data: profile
+    });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: "Error al obtener el perfil",
-      error: error.message
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
     });
   }
 };
 
 const updateProfile = async (req, res) => {
   try {
-    const { authId } = req.user;
-    const { name, profileImage } = req.body;
+    const authId = req.user.authId;
+    const { name, username, profileImage } = req.body;
 
-    const updatedUser = await usersService.updateProfile(authId, {
+    const updatedProfile = await usersService.updateProfile(authId, {
       name,
+      username,
       profileImage
     });
 
-    res.status(200).json(updatedUser);
+    return res.status(200).json({
+      message: "Perfil actualizado correctamente",
+      data: updatedProfile
+    });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: "Error al actualizar el perfil",
-      error: error.message
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
     });
   }
 };

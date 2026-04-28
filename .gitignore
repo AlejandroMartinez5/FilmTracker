@@ -2,10 +2,6 @@ node_modules
 .env
 src/keys/private.key
 src/keys/public.key
-Dockerfile
-docker-compose.yml
 public.key
 private.key
-docker-compose.prod.yml
-.dockerignore
 package-lock.json

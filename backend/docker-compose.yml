@@ -1,0 +1,103 @@
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    networks:
+      - FilmTrack-network
+
+  postgres-users-library:
+    image: postgres:16
+    container_name: postgres-users-library
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: reeltrack_users_library_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_users_library_data:/var/lib/postgresql/data
+      - ./ms-users-library/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d reeltrack_users_library_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - FilmTrack-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - FilmTrack-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build: ./ms-auth
+    ports:
+      - "3003:3003"
+    env_file:
+      - ./ms-auth/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    networks:
+      - FilmTrack-network
+
+  user-service:
+    build: ./ms-users
+    ports:
+      - "3002:3002"
+    env_file:
+      - ./ms-users/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    networks:
+      - FilmTrack-network
+
+  show-service:
+    build: ./ms-shows
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./ms-shows/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    networks:
+      - FilmTrack-network
+
+  users-library-service:
+    build: ./ms-users-library
+    ports:
+      - "3004:3004"
+    env_file:
+      - ./ms-users-library/.env
+    depends_on:
+      postgres-users-library:
+        condition: service_healthy
+    networks:
+      - FilmTrack-network
+
+networks:
+  FilmTrack-network:
+    driver: bridge
+
+volumes:
+  postgres_users_library_data:

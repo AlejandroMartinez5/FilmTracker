@@ -38,7 +38,7 @@ const consumeUserCreated = async () => {
     await channel.assertExchange(EXCHANGE_NAME, "fanout", {
       durable: true
     });
-    console.log("[ms-users] Exchange asegurado");
+    console.log("[ms-users] Exchange acsegurado");
 
     await channel.assertExchange(DLX_NAME, "direct", {
       durable: true

@@ -6,6 +6,16 @@ const { requestUsernameAvailability } = require("../utils/username-check.util");
 
 const usernameRegex = /^[a-zA-Z0-9._]{3,30}$/;
 
+const throwBadRequest = (message) => {
+  const error = new Error(message);
+  error.status = 400;
+  throw error;
+};
+
+const isDuplicateKeyError = (error) => {
+  return error?.code === 11000;
+};
+
 const isValidUrl = (value) => {
   try {
     new URL(value);
@@ -21,72 +31,77 @@ const register = async ({ email, password, name, username, profileImage }) => {
   const normalizedUsername = username?.trim().toLowerCase();
 
   if (!normalizedEmail || !password || !normalizedName || !normalizedUsername) {
-    const error = new Error("email, password, name y username son obligatorios");
-    error.status = 400;
-    throw error;
+    throwBadRequest("email, password, name y username son obligatorios");
   }
 
   if (password.length < 6) {
-    const error = new Error("La contraseña debe tener al menos 6 caracteres");
-    error.status = 400;
-    throw error;
+    throwBadRequest("La contrasena debe tener al menos 6 caracteres");
   }
 
   if (normalizedName.length < 2 || normalizedName.length > 40) {
-    const error = new Error("El nombre debe tener entre 2 y 40 caracteres");
-    error.status = 400;
-    throw error;
+    throwBadRequest("El nombre debe tener entre 2 y 40 caracteres");
   }
 
   if (!usernameRegex.test(normalizedUsername)) {
-    const error = new Error(
-      "El username debe tener entre 3 y 30 caracteres y solo puede contener letras, números, punto o guion bajo"
+    throwBadRequest(
+      "El username debe tener entre 3 y 30 caracteres y solo puede contener letras, numeros, punto o guion bajo"
     );
-    error.status = 400;
-    throw error;
   }
 
   if (profileImage && !isValidUrl(profileImage)) {
-    const error = new Error("La imagen de perfil debe ser una URL válida");
-    error.status = 400;
-    throw error;
+    throwBadRequest("La imagen de perfil debe ser una URL valida");
   }
 
   const exists = await repository.findByEmail(normalizedEmail);
   if (exists) {
-    const error = new Error("Usuario ya existe");
-    error.status = 400;
-    throw error;
+    throwBadRequest("Usuario ya existe");
+  }
+
+  const usernameReserved = await repository.findByUsername(normalizedUsername);
+  if (usernameReserved) {
+    throwBadRequest("El username ya esta en uso");
   }
 
   const usernameCheck = await requestUsernameAvailability(normalizedUsername);
-
   if (!usernameCheck.available) {
-    const error = new Error("El username ya está en uso");
-    error.status = 400;
-    throw error;
+    throwBadRequest("El username ya esta en uso");
   }
 
   const hashed = await bcrypt.hash(password, 10);
+  let authUser;
 
-  const authUser = await repository.createAuthUser({
-    email: normalizedEmail,
-    password: hashed,
-    role: "USER"
-  });
+  try {
+    authUser = await repository.createAuthUser({
+      email: normalizedEmail,
+      username: normalizedUsername,
+      password: hashed,
+      role: "USER"
+    });
 
-  await publishUserCreated({
-    authId: authUser._id.toString(),
-    email: authUser.email,
-    role: authUser.role,
-    name: normalizedName,
-    username: normalizedUsername,
-    profileImage: profileImage || null
-  });
+    await publishUserCreated({
+      authId: authUser._id.toString(),
+      email: authUser.email,
+      role: authUser.role,
+      name: normalizedName,
+      username: authUser.username,
+      profileImage: profileImage || null
+    });
+  } catch (error) {
+    if (authUser) {
+      await repository.deleteById(authUser._id);
+    }
+
+    if (isDuplicateKeyError(error)) {
+      throwBadRequest("El email o username ya esta en uso");
+    }
+
+    throw error;
+  }
 
   return {
     id: authUser._id,
     email: authUser.email,
+    username: authUser.username,
     role: authUser.role
   };
 };
@@ -95,9 +110,7 @@ const login = async ({ email, password }) => {
   const normalizedEmail = email?.trim().toLowerCase();
 
   if (!normalizedEmail || !password) {
-    const error = new Error("email y password son obligatorios");
-    error.status = 400;
-    throw error;
+    throwBadRequest("email y password son obligatorios");
   }
 
   const user = await repository.findByEmail(normalizedEmail);
@@ -109,7 +122,7 @@ const login = async ({ email, password }) => {
 
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) {
-    const error = new Error("Credenciales inválidas");
+    const error = new Error("Credenciales invalidas");
     error.status = 401;
     throw error;
   }
@@ -124,6 +137,7 @@ const login = async ({ email, password }) => {
     user: {
       id: user._id,
       email: user.email,
+      username: user.username,
       role: user.role
     },
     token

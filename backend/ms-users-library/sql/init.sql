@@ -3,8 +3,10 @@ CREATE TABLE IF NOT EXISTS favorites (
     auth_id VARCHAR(255) NOT NULL,
     tvmaze_id INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (auth_id, tvmaze_id)
+    UNIQUE (auth_id, tvmaze_id),
+    CHECK (tvmaze_id > 0)
 );
+
 
 CREATE TABLE IF NOT EXISTS watchlist (
     id SERIAL PRIMARY KEY,

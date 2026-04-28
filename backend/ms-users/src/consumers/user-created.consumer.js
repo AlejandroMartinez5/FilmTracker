@@ -2,10 +2,27 @@ const amqp = require("amqplib");
 const usersService = require("../services/users.service");
 
 const EXCHANGE_NAME = "user_events";
-const QUEUE_NAME = "user_created_queue";
+const QUEUE_NAME = "user_created_queue_v2";
+const DLX_NAME = "user_events_dlx";
+const DLQ_NAME = "user_created_dlq_v2";
+const DLQ_ROUTING_KEY = "user.created.failed";
 
 let connection = null;
 let channel = null;
+
+const isPermanentError = (error) => {
+  const status = error?.status;
+
+  if (status >= 400 && status < 500) {
+    return true;
+  }
+
+  if (error?.code === 11000) {
+    return true;
+  }
+
+  return false;
+};
 
 const consumeUserCreated = async () => {
   try {
@@ -23,8 +40,25 @@ const consumeUserCreated = async () => {
     });
     console.log("[ms-users] Exchange asegurado");
 
-    const q = await channel.assertQueue(QUEUE_NAME, {
+    await channel.assertExchange(DLX_NAME, "direct", {
       durable: true
+    });
+    console.log("[ms-users] Dead-letter exchange asegurado");
+
+    await channel.assertQueue(DLQ_NAME, {
+      durable: true
+    });
+    console.log("[ms-users] Dead-letter queue asegurada");
+
+    await channel.bindQueue(DLQ_NAME, DLX_NAME, DLQ_ROUTING_KEY);
+    console.log("[ms-users] Dead-letter queue enlazada");
+
+    const q = await channel.assertQueue(QUEUE_NAME, {
+      durable: true,
+      arguments: {
+        "x-dead-letter-exchange": DLX_NAME,
+        "x-dead-letter-routing-key": DLQ_ROUTING_KEY
+      }
     });
     console.log("[ms-users] Queue asegurada");
 
@@ -44,6 +78,13 @@ const consumeUserCreated = async () => {
           channel.ack(msg);
         } catch (error) {
           console.error("[ms-users] Error procesando user.created:", error);
+
+          if (isPermanentError(error)) {
+            console.error("[ms-users] Error permanente, enviando mensaje a DLQ");
+            channel.nack(msg, false, false);
+            return;
+          }
+
           channel.nack(msg, false, true);
         }
       },

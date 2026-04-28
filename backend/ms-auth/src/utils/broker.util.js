@@ -49,7 +49,10 @@ const publishUserCreated = async (userData) => {
 
   if (sent) {
     console.log("[ms-auth] Evento user.created publicado:", userData);
+    return;
   }
+
+  throw new Error("No se pudo publicar el evento user.created");
 };
 
 module.exports = {

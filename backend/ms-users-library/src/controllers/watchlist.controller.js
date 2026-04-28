@@ -1,11 +1,32 @@
 const watchlistService = require("../services/watchlist.service");
 
+const parseTvmazeId = (value) => {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    return null;
+  }
+
+  return parsed;
+};
+
 const add = async (req, res) => {
   try {
     const { tvmazeId } = req.body;
     const { authId } = req.user;
+    const parsedTvmazeId = parseTvmazeId(tvmazeId);
 
-    const data = await watchlistService.addToWatchlist(authId, Number(tvmazeId));
+    if (parsedTvmazeId === null) {
+      return res.status(400).json({
+        message: "tvmazeId debe ser un entero mayor a 0"
+      });
+    }
+
+    const data = await watchlistService.addToWatchlist(authId, parsedTvmazeId);
 
     res.status(201).json({
       message: "Agregado a watchlist",
@@ -39,8 +60,15 @@ const remove = async (req, res) => {
   try {
     const { tvmazeId } = req.params;
     const { authId } = req.user;
+    const parsedTvmazeId = parseTvmazeId(tvmazeId);
 
-    const data = await watchlistService.removeFromWatchlist(authId, Number(tvmazeId));
+    if (parsedTvmazeId === null) {
+      return res.status(400).json({
+        message: "tvmazeId debe ser un entero mayor a 0"
+      });
+    }
+
+    const data = await watchlistService.removeFromWatchlist(authId, parsedTvmazeId);
 
     res.json({
       message: "Eliminado de watchlist",
@@ -57,8 +85,15 @@ const check = async (req, res) => {
   try {
     const { tvmazeId } = req.params;
     const { authId } = req.user;
+    const parsedTvmazeId = parseTvmazeId(tvmazeId);
 
-    const exists = await watchlistService.checkWatchlist(authId, Number(tvmazeId));
+    if (parsedTvmazeId === null) {
+      return res.status(400).json({
+        message: "tvmazeId debe ser un entero mayor a 0"
+      });
+    }
+
+    const exists = await watchlistService.checkWatchlist(authId, parsedTvmazeId);
 
     res.json({ exists });
   } catch (error) {

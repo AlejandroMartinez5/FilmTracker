@@ -4,11 +4,21 @@ const findByEmail = async (email) => {
   return Auth.findOne({ email });
 };
 
+const findByUsername = async (username) => {
+  return Auth.findOne({ username });
+};
+
 const createAuthUser = async (data) => {
   return Auth.create(data);
 };
 
+const deleteById = async (id) => {
+  return Auth.findByIdAndDelete(id);
+};
+
 module.exports = {
   findByEmail,
-  createAuthUser
+  findByUsername,
+  createAuthUser,
+  deleteById
 };

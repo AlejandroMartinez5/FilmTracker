@@ -6,9 +6,10 @@ const { authenticateToken } = require("../middlewares/auth.middleware");
 
 router.get("/health", usersController.healthCheck);
 router.get("/search", usersController.searchUsers);
-router.get("/:username", usersController.getPublicProfileByUsername);
 
 router.get("/profile", authenticateToken, usersController.getProfile);
 router.put("/profile", authenticateToken, usersController.updateProfile);
+
+router.get("/:username", usersController.getPublicProfileByUsername);
 
 module.exports = router;

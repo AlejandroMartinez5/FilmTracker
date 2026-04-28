@@ -1,17 +1,32 @@
 const favoritesService = require("../services/favorites.service");
 
+const parseTvmazeId = (value) => {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  const parsed = Number(value);
+
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    return null;
+  }
+
+  return parsed;
+};
+
 const addFavorite = async (req, res) => {
   try {
     const { tvmazeId } = req.body;
     const { authId } = req.user;
+    const parsedTvmazeId = parseTvmazeId(tvmazeId);
 
-    if (!tvmazeId) {
+    if (parsedTvmazeId === null) {
       return res.status(400).json({
-        message: "tvmazeId es obligatorio"
+        message: "tvmazeId debe ser un entero mayor a 0"
       });
     }
 
-    const favorite = await favoritesService.addFavorite(authId, Number(tvmazeId));
+    const favorite = await favoritesService.addFavorite(authId, parsedTvmazeId);
 
     return res.status(201).json({
       message: "Favorito agregado correctamente",
@@ -44,8 +59,15 @@ const removeFavorite = async (req, res) => {
   try {
     const { tvmazeId } = req.params;
     const { authId } = req.user;
+    const parsedTvmazeId = parseTvmazeId(tvmazeId);
 
-    await favoritesService.removeFavorite(authId, Number(tvmazeId));
+    if (parsedTvmazeId === null) {
+      return res.status(400).json({
+        message: "tvmazeId debe ser un entero mayor a 0"
+      });
+    }
+
+    await favoritesService.removeFavorite(authId, parsedTvmazeId);
 
     return res.status(200).json({
       message: "Favorito eliminado correctamente"

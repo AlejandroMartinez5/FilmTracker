@@ -8,3 +8,4 @@ public.key
 private.key
 docker-compose.prod.yml
 .dockerignore
+package-lock.json

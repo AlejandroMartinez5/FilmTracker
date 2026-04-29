@@ -3,7 +3,8 @@ const path = require("path");
 const jwt = require("jsonwebtoken");
 
 const getPublicKey = () => {
-  const publicKeyPath = process.env.JWT_PUBLIC_KEY_PATH || "./keys/public.key";
+  const publicKeyPath =
+    process.env.JWT_PUBLIC_KEY_PATH || "./src/keys/public.key";
 
   const resolvedPath = path.resolve(publicKeyPath);
 

@@ -2,7 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
-const reviewsRoutes = require("./routes/reviews.routes");
+const reviewsRoutes = require("./src/routes/reviews.routes");
+const commentsRoutes = require("./src/routes/comments.routes");
 
 const app = express();
 
@@ -17,6 +18,8 @@ app.get("/health", (req, res) => {
   });
 });
 
+app.use("/api", commentsRoutes);
 app.use("/api/reviews", reviewsRoutes);
+
 
 module.exports = app;

@@ -27,6 +27,26 @@ services:
     networks:
       - FilmTrack-network
 
+  postgres-reviews:
+    image: postgres:16
+    container_name: postgres-reviews
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: reeltrack_reviews_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_reviews_data:/var/lib/postgresql/data
+      - ./ms-reviews/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d reeltrack_reviews_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - FilmTrack-network
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -95,9 +115,25 @@ services:
     networks:
       - FilmTrack-network
 
+  reviews-service:
+    build: ./ms-reviews
+    ports:
+      - "3005:3005"
+    environment:
+      PORT: 3005
+      DATABASE_URL: postgres://postgres:postgres@postgres-reviews:5432/reeltrack_reviews_db
+      JWT_PUBLIC_KEY_PATH: /app/src/keys/public.key
+      REVIEW_EDIT_LIMIT_MINUTES: 30
+    depends_on:
+      postgres-reviews:
+        condition: service_healthy
+    networks:
+      - FilmTrack-network
+
 networks:
   FilmTrack-network:
     driver: bridge
 
 volumes:
   postgres_users_library_data:
+  postgres_reviews_data:

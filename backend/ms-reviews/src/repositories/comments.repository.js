@@ -11,20 +11,37 @@ const createComment = async ({ reviewId, authId, content }) => {
   return result.rows[0];
 };
 
-const findByReviewId = async (reviewId) => {
+const findByReviewId = async (reviewId, { limit, offset }) => {
   const query = `
+    WITH paginated_comments AS (
+      SELECT *
+      FROM comments
+      WHERE review_id = $1
+      ORDER BY created_at ASC
+      LIMIT $2 OFFSET $3
+    )
     SELECT 
       c.*,
       COUNT(DISTINCT cl.id) AS likes_count
-    FROM comments c
+    FROM paginated_comments c
     LEFT JOIN comment_likes cl ON c.id = cl.comment_id
-    WHERE c.review_id = $1
     GROUP BY c.id
     ORDER BY c.created_at ASC
   `;
 
-  const result = await pool.query(query, [reviewId]);
+  const result = await pool.query(query, [reviewId, limit, offset]);
   return result.rows;
+};
+
+const countByReviewId = async (reviewId) => {
+  const query = `
+    SELECT COUNT(*) AS total
+    FROM comments
+    WHERE review_id = $1
+  `;
+
+  const result = await pool.query(query, [reviewId]);
+  return Number(result.rows[0].total);
 };
 
 const findById = async (commentId) => {
@@ -100,6 +117,7 @@ const countLikes = async (commentId) => {
 module.exports = {
   createComment,
   findByReviewId,
+  countByReviewId,
   findById,
   updateComment,
   deleteComment,

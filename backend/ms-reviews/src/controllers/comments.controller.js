@@ -25,9 +25,15 @@ const getCommentsByReview = async (req, res) => {
   try {
     const { reviewId } = req.params;
 
-    const comments = await commentsService.getCommentsByReview(reviewId);
+    const result = await commentsService.getCommentsByReview(
+      reviewId,
+      req.query
+    );
 
-    return res.status(200).json({ comments });
+    return res.status(200).json({
+      comments: result.comments,
+      pagination: result.pagination
+    });
   } catch (error) {
     return res.status(error.status || 500).json({
       message: error.message

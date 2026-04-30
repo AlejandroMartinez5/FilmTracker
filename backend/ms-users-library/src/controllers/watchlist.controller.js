@@ -43,14 +43,15 @@ const getByUser = async (req, res) => {
   try {
     const { authId } = req.user;
 
-    const data = await watchlistService.getWatchlist(authId);
+    const result = await watchlistService.getWatchlist(authId, req.query);
 
     res.json({
       message: "Watchlist obtenida correctamente",
-      data
+      data: result.data,
+      pagination: result.pagination
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(error.statusCode || 500).json({
       message: error.message
     });
   }

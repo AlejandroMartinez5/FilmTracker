@@ -10,14 +10,25 @@ const add = async (authId, tvmazeId) => {
   return result.rows[0];
 };
 
-const getByUser = async (authId) => {
+const getByUser = async (authId, { limit, offset }) => {
   const query = `
     SELECT * FROM watchlist
     WHERE auth_id = $1
-    ORDER BY created_at DESC;
+    ORDER BY created_at DESC
+    LIMIT $2 OFFSET $3;
+  `;
+  const result = await pool.query(query, [authId, limit, offset]);
+  return result.rows;
+};
+
+const countByUser = async (authId) => {
+  const query = `
+    SELECT COUNT(*) AS total
+    FROM watchlist
+    WHERE auth_id = $1;
   `;
   const result = await pool.query(query, [authId]);
-  return result.rows;
+  return Number(result.rows[0].total);
 };
 
 const remove = async (authId, tvmazeId) => {
@@ -42,6 +53,7 @@ const exists = async (authId, tvmazeId) => {
 module.exports = {
   add,
   getByUser,
+  countByUser,
   remove,
   exists
 };

@@ -1,5 +1,9 @@
 const commentsRepository = require("../repositories/comments.repository");
 const reviewsRepository = require("../repositories/reviews.repository");
+const {
+  getPaginationParams,
+  buildPaginationMeta
+} = require("../utils/pagination.util");
 
 const validateCommentContent = (content) => {
   if (!content || !content.trim()) {
@@ -38,7 +42,7 @@ const createComment = async (reviewId, { content }, user) => {
   return comment;
 };
 
-const getCommentsByReview = async (reviewId) => {
+const getCommentsByReview = async (reviewId, paginationQuery) => {
   validateId(reviewId, "El reviewId debe ser válido");
 
   const review = await reviewsRepository.findById(reviewId);
@@ -49,7 +53,21 @@ const getCommentsByReview = async (reviewId) => {
     throw error;
   }
 
-  return await commentsRepository.findByReviewId(Number(reviewId));
+  const paginationParams = getPaginationParams(paginationQuery);
+  const total = await commentsRepository.countByReviewId(Number(reviewId));
+  const comments = await commentsRepository.findByReviewId(
+    Number(reviewId),
+    paginationParams
+  );
+
+  return {
+    comments,
+    pagination: buildPaginationMeta({
+      page: paginationParams.page,
+      limit: paginationParams.limit,
+      total
+    })
+  };
 };
 
 const updateComment = async (commentId, { content }, user) => {

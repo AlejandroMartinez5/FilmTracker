@@ -1,4 +1,8 @@
 const watchlistRepository = require("../repositories/watchlist.repository");
+const {
+  getPaginationParams,
+  buildPaginationMeta
+} = require("../utils/pagination.util");
 
 const addToWatchlist = async (authId, tvmazeId) => {
   const exists = await watchlistRepository.exists(authId, tvmazeId);
@@ -10,8 +14,19 @@ const addToWatchlist = async (authId, tvmazeId) => {
   return await watchlistRepository.add(authId, tvmazeId);
 };
 
-const getWatchlist = async (authId) => {
-  return await watchlistRepository.getByUser(authId);
+const getWatchlist = async (authId, paginationQuery) => {
+  const paginationParams = getPaginationParams(paginationQuery);
+  const total = await watchlistRepository.countByUser(authId);
+  const data = await watchlistRepository.getByUser(authId, paginationParams);
+
+  return {
+    data,
+    pagination: buildPaginationMeta({
+      page: paginationParams.page,
+      limit: paginationParams.limit,
+      total
+    })
+  };
 };
 
 const removeFromWatchlist = async (authId, tvmazeId) => {

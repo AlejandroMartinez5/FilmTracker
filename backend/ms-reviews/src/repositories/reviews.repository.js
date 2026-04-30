@@ -24,34 +24,63 @@ const findById = async (reviewId) => {
   return result.rows[0];
 };
 
-const findByShowId = async (tvmazeId) => {
+const findByShowId = async (tvmazeId, { limit, offset }) => {
   const query = `
+    WITH paginated_reviews AS (
+      SELECT *
+      FROM reviews
+      WHERE tvmaze_id = $1
+      ORDER BY created_at DESC
+      LIMIT $2 OFFSET $3
+    )
     SELECT 
       r.*,
       COUNT(DISTINCT rl.id) AS likes_count,
       COUNT(DISTINCT c.id) AS comments_count
-    FROM reviews r
+    FROM paginated_reviews r
     LEFT JOIN review_likes rl ON r.id = rl.review_id
     LEFT JOIN comments c ON r.id = c.review_id
-    WHERE r.tvmaze_id = $1
     GROUP BY r.id
     ORDER BY r.created_at DESC
   `;
 
-  const result = await pool.query(query, [tvmazeId]);
+  const result = await pool.query(query, [tvmazeId, limit, offset]);
   return result.rows;
 };
 
-const findByUser = async (authId) => {
+const countByShowId = async (tvmazeId) => {
+  const query = `
+    SELECT COUNT(*) AS total
+    FROM reviews
+    WHERE tvmaze_id = $1
+  `;
+
+  const result = await pool.query(query, [tvmazeId]);
+  return Number(result.rows[0].total);
+};
+
+const findByUser = async (authId, { limit, offset }) => {
   const query = `
     SELECT *
     FROM reviews
     WHERE auth_id = $1
     ORDER BY created_at DESC
+    LIMIT $2 OFFSET $3
+  `;
+
+  const result = await pool.query(query, [authId, limit, offset]);
+  return result.rows;
+};
+
+const countByUser = async (authId) => {
+  const query = `
+    SELECT COUNT(*) AS total
+    FROM reviews
+    WHERE auth_id = $1
   `;
 
   const result = await pool.query(query, [authId]);
-  return result.rows;
+  return Number(result.rows[0].total);
 };
 
 const updateReview = async ({ reviewId, rating, title, content }) => {
@@ -121,7 +150,9 @@ module.exports = {
   createReview,
   findById,
   findByShowId,
+  countByShowId,
   findByUser,
+  countByUser,
   updateReview,
   deleteReview,
   likeReview,

@@ -34,3 +34,12 @@ CREATE TABLE IF NOT EXISTS comment_likes (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (comment_id, auth_id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_reviews_tvmaze_created
+ON reviews (tvmaze_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_reviews_auth_created
+ON reviews (auth_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_comments_review_created
+ON comments (review_id, created_at ASC);

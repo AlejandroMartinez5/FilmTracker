@@ -1,4 +1,8 @@
 const favoritesRepository = require("../repositories/favorites.repository");
+const {
+  getPaginationParams,
+  buildPaginationMeta
+} = require("../utils/pagination.util");
 
 const addFavorite = async (authId, tvmazeId) => {
   const existingFavorite = await favoritesRepository.findFavorite(authId, tvmazeId);
@@ -12,8 +16,22 @@ const addFavorite = async (authId, tvmazeId) => {
   return favoritesRepository.createFavorite(authId, tvmazeId);
 };
 
-const getFavorites = async (authId) => {
-  return favoritesRepository.getFavoritesByAuthId(authId);
+const getFavorites = async (authId, paginationQuery) => {
+  const paginationParams = getPaginationParams(paginationQuery);
+  const total = await favoritesRepository.countFavoritesByAuthId(authId);
+  const data = await favoritesRepository.getFavoritesByAuthId(
+    authId,
+    paginationParams
+  );
+
+  return {
+    data,
+    pagination: buildPaginationMeta({
+      page: paginationParams.page,
+      limit: paginationParams.limit,
+      total
+    })
+  };
 };
 
 const removeFavorite = async (authId, tvmazeId) => {

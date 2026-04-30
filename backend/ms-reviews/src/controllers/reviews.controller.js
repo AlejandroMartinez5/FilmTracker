@@ -19,10 +19,11 @@ const getReviewsByShow = async (req, res) => {
   try {
     const { tvmazeId } = req.params;
 
-    const reviews = await reviewsService.getReviewsByShow(tvmazeId);
+    const result = await reviewsService.getReviewsByShow(tvmazeId, req.query);
 
     return res.status(200).json({
-      reviews
+      reviews: result.reviews,
+      pagination: result.pagination
     });
   } catch (error) {
     return res.status(error.status || 500).json({
@@ -35,10 +36,11 @@ const getReviewsByUser = async (req, res) => {
   try {
     const { authId } = req.params;
 
-    const reviews = await reviewsService.getReviewsByUser(authId);
+    const result = await reviewsService.getReviewsByUser(authId, req.query);
 
     return res.status(200).json({
-      reviews
+      reviews: result.reviews,
+      pagination: result.pagination
     });
   } catch (error) {
     return res.status(error.status || 500).json({

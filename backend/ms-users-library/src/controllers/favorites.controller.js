@@ -42,14 +42,15 @@ const addFavorite = async (req, res) => {
 const getFavorites = async (req, res) => {
   try {
     const { authId } = req.user;
-    const favorites = await favoritesService.getFavorites(authId);
+    const result = await favoritesService.getFavorites(authId, req.query);
 
     return res.status(200).json({
       message: "Favoritos obtenidos correctamente",
-      data: favorites
+      data: result.data,
+      pagination: result.pagination
     });
   } catch (error) {
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       message: error.message || "Error interno del servidor"
     });
   }

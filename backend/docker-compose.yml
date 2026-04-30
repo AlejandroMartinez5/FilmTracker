@@ -96,8 +96,6 @@ services:
     env_file:
       - ./ms-shows/.env
     depends_on:
-      rabbitmq:
-        condition: service_healthy
       mongo:
         condition: service_started
     networks:

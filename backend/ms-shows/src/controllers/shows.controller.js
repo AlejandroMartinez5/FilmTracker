@@ -226,10 +226,17 @@ async function getHome(req, res) {
     const { limit } = req.query;
 
     const numericLimit = Number(limit) || 10;
+    const MAX_LIMIT = 50;
 
     if (!Number.isInteger(numericLimit) || numericLimit <= 0) {
       return res.status(400).json({
         message: 'El parámetro limit debe ser un número entero mayor a 0'
+      });
+    }
+
+    if (numericLimit > MAX_LIMIT) {
+      return res.status(400).json({
+        message: `El parametro limit no puede ser mayor a ${MAX_LIMIT}`
       });
     }
 

@@ -21,15 +21,26 @@ const findFavorite = async (authId, tvmazeId) => {
   return result.rows[0] || null;
 };
 
-const getFavoritesByAuthId = async (authId) => {
+const getFavoritesByAuthId = async (authId, { limit, offset }) => {
   const query = `
     SELECT id, auth_id, tvmaze_id, created_at
     FROM favorites
     WHERE auth_id = $1
     ORDER BY created_at DESC
+    LIMIT $2 OFFSET $3
+  `;
+  const result = await pool.query(query, [authId, limit, offset]);
+  return result.rows;
+};
+
+const countFavoritesByAuthId = async (authId) => {
+  const query = `
+    SELECT COUNT(*) AS total
+    FROM favorites
+    WHERE auth_id = $1
   `;
   const result = await pool.query(query, [authId]);
-  return result.rows;
+  return Number(result.rows[0].total);
 };
 
 const deleteFavorite = async (authId, tvmazeId) => {
@@ -46,5 +57,6 @@ module.exports = {
   createFavorite,
   findFavorite,
   getFavoritesByAuthId,
+  countFavoritesByAuthId,
   deleteFavorite
 };

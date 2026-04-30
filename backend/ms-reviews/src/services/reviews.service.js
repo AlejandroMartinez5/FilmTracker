@@ -1,4 +1,8 @@
 const reviewsRepository = require("../repositories/reviews.repository");
+const {
+  getPaginationParams,
+  buildPaginationMeta
+} = require("../utils/pagination.util");
 
 const REVIEW_EDIT_LIMIT_MINUTES =
   Number(process.env.REVIEW_EDIT_LIMIT_MINUTES) || 30;
@@ -63,24 +67,49 @@ const createReview = async ({ tvmazeId, rating, title, content }, user) => {
   }
 };
 
-const getReviewsByShow = async (tvmazeId) => {
+const getReviewsByShow = async (tvmazeId, paginationQuery) => {
   if (!tvmazeId || isNaN(tvmazeId) || Number(tvmazeId) <= 0) {
     const error = new Error("El tvmazeId debe ser válido");
     error.status = 400;
     throw error;
   }
 
-  return await reviewsRepository.findByShowId(Number(tvmazeId));
+  const paginationParams = getPaginationParams(paginationQuery);
+  const total = await reviewsRepository.countByShowId(Number(tvmazeId));
+  const reviews = await reviewsRepository.findByShowId(
+    Number(tvmazeId),
+    paginationParams
+  );
+
+  return {
+    reviews,
+    pagination: buildPaginationMeta({
+      page: paginationParams.page,
+      limit: paginationParams.limit,
+      total
+    })
+  };
 };
 
-const getReviewsByUser = async (authId) => {
+const getReviewsByUser = async (authId, paginationQuery) => {
   if (!authId) {
     const error = new Error("El authId es obligatorio");
     error.status = 400;
     throw error;
   }
 
-  return await reviewsRepository.findByUser(authId);
+  const paginationParams = getPaginationParams(paginationQuery);
+  const total = await reviewsRepository.countByUser(authId);
+  const reviews = await reviewsRepository.findByUser(authId, paginationParams);
+
+  return {
+    reviews,
+    pagination: buildPaginationMeta({
+      page: paginationParams.page,
+      limit: paginationParams.limit,
+      total
+    })
+  };
 };
 
 const updateReview = async (reviewId, { rating, title, content }, user) => {

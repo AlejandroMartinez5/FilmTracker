@@ -35,12 +35,19 @@ const findByShowId = async (tvmazeId, { limit, offset }) => {
     )
     SELECT 
       r.*,
-      COUNT(DISTINCT rl.id) AS likes_count,
-      COUNT(DISTINCT c.id) AS comments_count
+      COALESCE(rl.likes_count, 0) AS likes_count,
+      COALESCE(c.comments_count, 0) AS comments_count
     FROM paginated_reviews r
-    LEFT JOIN review_likes rl ON r.id = rl.review_id
-    LEFT JOIN comments c ON r.id = c.review_id
-    GROUP BY r.id
+    LEFT JOIN (
+      SELECT review_id, COUNT(*) AS likes_count
+      FROM review_likes
+      GROUP BY review_id
+    ) rl ON r.id = rl.review_id
+    LEFT JOIN (
+      SELECT review_id, COUNT(*) AS comments_count
+      FROM comments
+      GROUP BY review_id
+    ) c ON r.id = c.review_id
     ORDER BY r.created_at DESC
   `;
 

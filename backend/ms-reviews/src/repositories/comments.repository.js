@@ -22,10 +22,13 @@ const findByReviewId = async (reviewId, { limit, offset }) => {
     )
     SELECT 
       c.*,
-      COUNT(DISTINCT cl.id) AS likes_count
+      COALESCE(cl.likes_count, 0) AS likes_count
     FROM paginated_comments c
-    LEFT JOIN comment_likes cl ON c.id = cl.comment_id
-    GROUP BY c.id
+    LEFT JOIN (
+      SELECT comment_id, COUNT(*) AS likes_count
+      FROM comment_likes
+      GROUP BY comment_id
+    ) cl ON c.id = cl.comment_id
     ORDER BY c.created_at ASC
   `;
 

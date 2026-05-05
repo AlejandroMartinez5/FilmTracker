@@ -6,6 +6,7 @@ const { authenticateToken } = require("../middlewares/auth.middleware");
 
 router.post("/", authenticateToken, favoritesController.addFavorite);
 router.get("/", authenticateToken, favoritesController.getFavorites);
+router.get("/user/:authId", favoritesController.getFavoritesByUser);
 router.delete("/:tvmazeId", authenticateToken, favoritesController.removeFavorite);
 
 module.exports = router;

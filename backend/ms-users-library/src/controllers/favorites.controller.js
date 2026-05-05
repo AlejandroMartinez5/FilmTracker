@@ -56,6 +56,23 @@ const getFavorites = async (req, res) => {
   }
 };
 
+const getFavoritesByUser = async (req, res) => {
+  try {
+    const { authId } = req.params;
+    const result = await favoritesService.getFavorites(authId, req.query);
+
+    return res.status(200).json({
+      message: "Favoritos del usuario obtenidos correctamente",
+      data: result.data,
+      pagination: result.pagination
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      message: error.message || "Error interno del servidor"
+    });
+  }
+};
+
 const removeFavorite = async (req, res) => {
   try {
     const { tvmazeId } = req.params;
@@ -83,5 +100,6 @@ const removeFavorite = async (req, res) => {
 module.exports = {
   addFavorite,
   getFavorites,
+  getFavoritesByUser,
   removeFavorite
 };

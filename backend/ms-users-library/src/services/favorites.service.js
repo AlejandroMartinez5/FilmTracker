@@ -4,6 +4,18 @@ const {
   buildPaginationMeta
 } = require("../utils/pagination.util");
 
+const validateAuthId = (authId) => {
+  const normalizedAuthId = authId?.trim();
+
+  if (!normalizedAuthId) {
+    const error = new Error("authId es obligatorio");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return normalizedAuthId;
+};
+
 const addFavorite = async (authId, tvmazeId) => {
   const existingFavorite = await favoritesRepository.findFavorite(authId, tvmazeId);
 
@@ -17,10 +29,11 @@ const addFavorite = async (authId, tvmazeId) => {
 };
 
 const getFavorites = async (authId, paginationQuery) => {
+  const normalizedAuthId = validateAuthId(authId);
   const paginationParams = getPaginationParams(paginationQuery);
-  const total = await favoritesRepository.countFavoritesByAuthId(authId);
+  const total = await favoritesRepository.countFavoritesByAuthId(normalizedAuthId);
   const data = await favoritesRepository.getFavoritesByAuthId(
-    authId,
+    normalizedAuthId,
     paginationParams
   );
 

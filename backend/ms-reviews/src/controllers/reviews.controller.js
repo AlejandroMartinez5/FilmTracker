@@ -19,7 +19,11 @@ const getReviewsByShow = async (req, res) => {
   try {
     const { tvmazeId } = req.params;
 
-    const result = await reviewsService.getReviewsByShow(tvmazeId, req.query);
+    const result = await reviewsService.getReviewsByShow(
+      tvmazeId,
+      req.query,
+      req.user
+    );
 
     return res.status(200).json({
       reviews: result.reviews,

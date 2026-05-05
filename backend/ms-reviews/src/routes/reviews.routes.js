@@ -1,12 +1,19 @@
 const express = require("express");
 const reviewsController = require("../controllers/reviews.controller");
-const { authenticateToken } = require("../middlewares/auth.middleware");
+const {
+  authenticateToken,
+  optionalAuthenticateToken
+} = require("../middlewares/auth.middleware");
 
 const router = express.Router();
 
 router.post("/", authenticateToken, reviewsController.createReview);
 
-router.get("/show/:tvmazeId", reviewsController.getReviewsByShow);
+router.get(
+  "/show/:tvmazeId",
+  optionalAuthenticateToken,
+  reviewsController.getReviewsByShow
+);
 
 router.get("/user/:authId", reviewsController.getReviewsByUser);
 

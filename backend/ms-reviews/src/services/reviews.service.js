@@ -67,7 +67,7 @@ const createReview = async ({ tvmazeId, rating, title, content }, user) => {
   }
 };
 
-const getReviewsByShow = async (tvmazeId, paginationQuery) => {
+const getReviewsByShow = async (tvmazeId, paginationQuery, user = null) => {
   if (!tvmazeId || isNaN(tvmazeId) || Number(tvmazeId) <= 0) {
     const error = new Error("El tvmazeId debe ser válido");
     error.status = 400;
@@ -78,7 +78,8 @@ const getReviewsByShow = async (tvmazeId, paginationQuery) => {
   const total = await reviewsRepository.countByShowId(Number(tvmazeId));
   const reviews = await reviewsRepository.findByShowId(
     Number(tvmazeId),
-    paginationParams
+    paginationParams,
+    user?.authId || null
   );
 
   return {

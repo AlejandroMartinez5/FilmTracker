@@ -24,7 +24,7 @@ const findById = async (reviewId) => {
   return result.rows[0];
 };
 
-const findByShowId = async (tvmazeId, { limit, offset }) => {
+const findByShowId = async (tvmazeId, { limit, offset }, authId = null) => {
   const query = `
     WITH paginated_reviews AS (
       SELECT *
@@ -36,7 +36,13 @@ const findByShowId = async (tvmazeId, { limit, offset }) => {
     SELECT 
       r.*,
       COALESCE(rl.likes_count, 0) AS likes_count,
-      COALESCE(c.comments_count, 0) AS comments_count
+      COALESCE(c.comments_count, 0) AS comments_count,
+      EXISTS (
+        SELECT 1
+        FROM review_likes user_like
+        WHERE user_like.review_id = r.id
+          AND user_like.auth_id = $4
+      ) AS liked_by_me
     FROM paginated_reviews r
     LEFT JOIN (
       SELECT review_id, COUNT(*) AS likes_count
@@ -51,7 +57,7 @@ const findByShowId = async (tvmazeId, { limit, offset }) => {
     ORDER BY r.created_at DESC
   `;
 
-  const result = await pool.query(query, [tvmazeId, limit, offset]);
+  const result = await pool.query(query, [tvmazeId, limit, offset, authId]);
   return result.rows;
 };
 

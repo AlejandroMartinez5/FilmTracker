@@ -23,7 +23,8 @@ services:
       test: ["CMD-SHELL", "pg_isready -U postgres -d reeltrack_users_library_db"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 15
+      start_period: 90s
     networks:
       - FilmTrack-network
 
@@ -43,7 +44,29 @@ services:
       test: ["CMD-SHELL", "pg_isready -U postgres -d reeltrack_reviews_db"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 15
+      start_period: 90s
+    networks:
+      - FilmTrack-network
+
+  postgres-friends:
+    image: postgres:16
+    container_name: postgres-friends
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: reeltrack_friends_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_friends_data:/var/lib/postgresql/data
+      - ./ms-friends/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d reeltrack_friends_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 90s
     networks:
       - FilmTrack-network
 
@@ -59,7 +82,8 @@ services:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 15
+      start_period: 60s
 
   auth-service:
     build: ./ms-auth
@@ -128,6 +152,20 @@ services:
     networks:
       - FilmTrack-network
 
+  friends-service:
+    build: ./ms-friends
+    ports:
+      - "3006:3006"
+    environment:
+      PORT: 3006
+      DATABASE_URL: postgresql://postgres:postgres@postgres-friends:5432/reeltrack_friends_db
+      JWT_PUBLIC_KEY_PATH: /app/src/keys/public.key
+    depends_on:
+      postgres-friends:
+        condition: service_healthy
+    networks:
+      - FilmTrack-network
+
 networks:
   FilmTrack-network:
     driver: bridge
@@ -135,3 +173,4 @@ networks:
 volumes:
   postgres_users_library_data:
   postgres_reviews_data:
+  postgres_friends_data:

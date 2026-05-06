@@ -2,12 +2,18 @@ const express = require("express");
 const reviewsController = require("../controllers/reviews.controller");
 const {
   authenticateToken,
-  optionalAuthenticateToken
+  optionalAuthenticateToken,
+  requireVerifiedEmail
 } = require("../middlewares/auth.middleware");
 
 const router = express.Router();
 
-router.post("/", authenticateToken, reviewsController.createReview);
+router.post(
+  "/",
+  authenticateToken,
+  requireVerifiedEmail,
+  reviewsController.createReview
+);
 
 router.get(
   "/show/:tvmazeId",

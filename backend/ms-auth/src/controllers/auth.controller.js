@@ -58,8 +58,77 @@ const login = async (req, res) => {
   }
 };
 
+const verifyEmail = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    const result = await authService.verifyEmail({ email, code });
+
+    return res.status(200).json({
+      message: "Correo verificado correctamente",
+      data: result
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
+    });
+  }
+};
+
+const resendVerificationEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    await authService.resendVerificationEmail({ email });
+
+    return res.status(200).json({
+      message: "Si el correo existe y no esta verificado, se enviaron instrucciones"
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
+    });
+  }
+};
+
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    await authService.forgotPassword({ email });
+
+    return res.status(200).json({
+      message: "Si el correo existe, se enviaron instrucciones para recuperar la contrasena"
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
+    });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+
+    await authService.resetPassword({ token, password });
+
+    return res.status(200).json({
+      message: "Contrasena actualizada correctamente"
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
+    });
+  }
+};
+
 module.exports = {
   healthCheck,
   register,
-  login
+  login,
+  verifyEmail,
+  resendVerificationEmail,
+  forgotPassword,
+  resetPassword
 };

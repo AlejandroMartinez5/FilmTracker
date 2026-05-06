@@ -1,12 +1,21 @@
 const { verifyToken } = require("../utils/jwt.util");
 
+const buildUserFromToken = (decoded) => {
+  return {
+    authId: decoded.authId,
+    email: decoded.email,
+    role: decoded.role,
+    emailVerified: decoded.emailVerified === true
+  };
+};
+
 const authenticateToken = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
-        message: "Token no proporcionado o formato inválido"
+        message: "Token no proporcionado o formato invalido"
       });
     }
 
@@ -25,13 +34,9 @@ const authenticateToken = (req, res, next) => {
       });
     }
 
-    req.user = {
-      authId: decoded.authId,
-      email: decoded.email,
-      role: decoded.role
-    };
+    req.user = buildUserFromToken(decoded);
 
-    next();
+    return next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
       return res.status(401).json({
@@ -40,7 +45,7 @@ const authenticateToken = (req, res, next) => {
     }
 
     return res.status(401).json({
-      message: "Token inválido"
+      message: "Token invalido"
     });
   }
 };
@@ -56,7 +61,7 @@ const optionalAuthenticateToken = (req, res, next) => {
 
     if (!authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
-        message: "Token no proporcionado o formato invÃ¡lido"
+        message: "Token no proporcionado o formato invalido"
       });
     }
 
@@ -69,11 +74,7 @@ const optionalAuthenticateToken = (req, res, next) => {
       });
     }
 
-    req.user = {
-      authId: decoded.authId,
-      email: decoded.email,
-      role: decoded.role
-    };
+    req.user = buildUserFromToken(decoded);
 
     return next();
   } catch (error) {
@@ -84,12 +85,23 @@ const optionalAuthenticateToken = (req, res, next) => {
     }
 
     return res.status(401).json({
-      message: "Token invÃ¡lido"
+      message: "Token invalido"
     });
   }
 };
 
+const requireVerifiedEmail = (req, res, next) => {
+  if (!req.user?.emailVerified) {
+    return res.status(403).json({
+      message: "Debes verificar tu correo para publicar resenas o comentarios"
+    });
+  }
+
+  return next();
+};
+
 module.exports = {
   authenticateToken,
-  optionalAuthenticateToken
+  optionalAuthenticateToken,
+  requireVerifiedEmail
 };

@@ -1,12 +1,16 @@
 const express = require("express");
 const commentsController = require("../controllers/comments.controller");
-const { authenticateToken } = require("../middlewares/auth.middleware");
+const {
+  authenticateToken,
+  requireVerifiedEmail
+} = require("../middlewares/auth.middleware");
 
 const router = express.Router();
 
 router.post(
   "/reviews/:reviewId/comments",
   authenticateToken,
+  requireVerifiedEmail,
   commentsController.createComment
 );
 

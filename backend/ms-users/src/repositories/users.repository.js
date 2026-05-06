@@ -33,7 +33,12 @@ const searchUsers = async (query) => {
 
 const findByUsernamePublic = async (username) => {
   return User.findOne({ username })
-    .select("_id name username profileImage createdAt");
+    .select("_id authId name username profileImage createdAt");
+};
+
+const findByAuthIdPublic = async (authId) => {
+  return User.findOne({ authId })
+    .select("_id authId name username profileImage createdAt");
 };
 
 module.exports = {
@@ -43,5 +48,6 @@ module.exports = {
   findByUsername,
   updateUserById,
   searchUsers,
-  findByUsernamePublic
+  findByUsernamePublic,
+  findByAuthIdPublic
 };

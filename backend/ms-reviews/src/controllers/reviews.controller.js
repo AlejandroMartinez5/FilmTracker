@@ -53,6 +53,20 @@ const getReviewsByUser = async (req, res) => {
   }
 };
 
+const getUserReviewsSummary = async (req, res) => {
+  try {
+    const { authId } = req.params;
+
+    const summary = await reviewsService.getUserReviewsSummary(authId);
+
+    return res.status(200).json(summary);
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error al obtener el resumen de reseÃ±as"
+    });
+  }
+};
+
 const updateReview = async (req, res) => {
   try {
     const { reviewId } = req.params;
@@ -134,6 +148,7 @@ module.exports = {
   createReview,
   getReviewsByShow,
   getReviewsByUser,
+  getUserReviewsSummary,
   updateReview,
   deleteReview,
   likeReview,

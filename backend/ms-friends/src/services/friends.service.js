@@ -180,6 +180,15 @@ const getFriends = async (authId, paginationQuery) => {
   };
 };
 
+const getPublicFriends = async (authId, paginationQuery) => {
+  return getFriends(authId, paginationQuery);
+};
+
+const getFriendsSummary = async (authId) => {
+  const user = validateAuthId(authId);
+  return await friendsRepository.getFriendsSummary(user);
+};
+
 const getIncomingRequests = async (authId, paginationQuery) => {
   const user = validateAuthId(authId);
   const paginationParams = getPaginationParams(paginationQuery);
@@ -247,6 +256,8 @@ module.exports = {
   cancelFriendRequest,
   removeFriend,
   getFriends,
+  getPublicFriends,
+  getFriendsSummary,
   getIncomingRequests,
   getOutgoingRequests,
   getRelationshipStatus

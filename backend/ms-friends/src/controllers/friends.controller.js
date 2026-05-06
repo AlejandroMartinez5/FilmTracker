@@ -103,6 +103,36 @@ const getFriends = async (req, res) => {
   }
 };
 
+const getPublicFriends = async (req, res) => {
+  try {
+    const { authId } = req.params;
+    const result = await friendsService.getPublicFriends(authId, req.query);
+
+    return res.status(200).json({
+      message: "Amigos del usuario obtenidos correctamente",
+      data: result.data,
+      pagination: result.pagination
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
+    });
+  }
+};
+
+const getFriendsSummary = async (req, res) => {
+  try {
+    const { authId } = req.params;
+    const summary = await friendsService.getFriendsSummary(authId);
+
+    return res.status(200).json(summary);
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
+    });
+  }
+};
+
 const getIncomingRequests = async (req, res) => {
   try {
     const result = await friendsService.getIncomingRequests(
@@ -164,6 +194,8 @@ module.exports = {
   cancelFriendRequest,
   removeFriend,
   getFriends,
+  getPublicFriends,
+  getFriendsSummary,
   getIncomingRequests,
   getOutgoingRequests,
   getRelationshipStatus

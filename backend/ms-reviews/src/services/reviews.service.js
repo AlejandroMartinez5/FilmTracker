@@ -113,6 +113,27 @@ const getReviewsByUser = async (authId, paginationQuery) => {
   };
 };
 
+const getUserReviewsSummary = async (authId) => {
+  const normalizedAuthId = authId?.trim();
+
+  if (!normalizedAuthId) {
+    const error = new Error("El authId es obligatorio");
+    error.status = 400;
+    throw error;
+  }
+
+  const [reviewsCount, totalLikesReceived] = await Promise.all([
+    reviewsRepository.countByUser(normalizedAuthId),
+    reviewsRepository.countLikesReceivedByUser(normalizedAuthId)
+  ]);
+
+  return {
+    authId: normalizedAuthId,
+    reviewsCount,
+    totalLikesReceived
+  };
+};
+
 const updateReview = async (reviewId, { rating, title, content }, user) => {
   if (!reviewId || isNaN(reviewId)) {
     const error = new Error("El reviewId debe ser válido");
@@ -262,6 +283,7 @@ module.exports = {
   createReview,
   getReviewsByShow,
   getReviewsByUser,
+  getUserReviewsSummary,
   updateReview,
   deleteReview,
   likeReview,

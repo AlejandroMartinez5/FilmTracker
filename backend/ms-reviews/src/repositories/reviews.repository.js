@@ -96,6 +96,18 @@ const countByUser = async (authId) => {
   return Number(result.rows[0].total);
 };
 
+const countLikesReceivedByUser = async (authId) => {
+  const query = `
+    SELECT COUNT(rl.id) AS total_likes
+    FROM reviews r
+    LEFT JOIN review_likes rl ON rl.review_id = r.id
+    WHERE r.auth_id = $1
+  `;
+
+  const result = await pool.query(query, [authId]);
+  return Number(result.rows[0].total_likes);
+};
+
 const updateReview = async ({ reviewId, rating, title, content }) => {
   const query = `
     UPDATE reviews
@@ -166,6 +178,7 @@ module.exports = {
   countByShowId,
   findByUser,
   countByUser,
+  countLikesReceivedByUser,
   updateReview,
   deleteReview,
   likeReview,

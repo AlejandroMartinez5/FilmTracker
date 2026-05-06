@@ -15,6 +15,7 @@ router.get(
   reviewsController.getReviewsByShow
 );
 
+router.get("/user/:authId/summary", reviewsController.getUserReviewsSummary);
 router.get("/user/:authId", reviewsController.getReviewsByUser);
 
 router.get("/:reviewId/likes", reviewsController.getReviewLikes);

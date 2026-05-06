@@ -219,6 +219,34 @@ const getPublicProfileByUsername = async (username) => {
 
   return {
     id: user._id,
+    authId: user.authId,
+    name: user.name,
+    username: user.username,
+    profileImage: user.profileImage,
+    createdAt: user.createdAt
+  };
+};
+
+const getPublicProfileByAuthId = async (authId) => {
+  const normalizedAuthId = authId?.trim();
+
+  if (!normalizedAuthId) {
+    const error = new Error("El authId es obligatorio");
+    error.status = 400;
+    throw error;
+  }
+
+  const user = await usersRepository.findByAuthIdPublic(normalizedAuthId);
+
+  if (!user) {
+    const error = new Error("Usuario no encontrado");
+    error.status = 404;
+    throw error;
+  }
+
+  return {
+    id: user._id,
+    authId: user.authId,
     name: user.name,
     username: user.username,
     profileImage: user.profileImage,
@@ -232,5 +260,6 @@ module.exports = {
   updateProfile,
   checkUsernameAvailability,
   searchUsers,
-  getPublicProfileByUsername
+  getPublicProfileByUsername,
+  getPublicProfileByAuthId
 };

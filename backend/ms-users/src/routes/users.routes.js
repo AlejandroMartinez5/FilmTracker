@@ -10,6 +10,7 @@ router.get("/search", usersController.searchUsers);
 router.get("/profile", authenticateToken, usersController.getProfile);
 router.put("/profile", authenticateToken, usersController.updateProfile);
 
+router.get("/id/:authId", usersController.getPublicProfileByAuthId);
 router.get("/:username", usersController.getPublicProfileByUsername);
 
 module.exports = router;

@@ -112,6 +112,22 @@ const findFriends = async (authId, { limit, offset }) => {
   return result.rows;
 };
 
+const getFriendsSummary = async (authId) => {
+  const query = `
+    SELECT COUNT(*) AS friends_count
+    FROM friend_requests
+    WHERE status = 'ACCEPTED'
+      AND (requester_auth_id = $1 OR receiver_auth_id = $1)
+  `;
+
+  const result = await pool.query(query, [authId]);
+
+  return {
+    authId,
+    friendsCount: Number(result.rows[0].friends_count)
+  };
+};
+
 const countIncomingRequests = async (authId) => {
   const query = `
     SELECT COUNT(*) AS total
@@ -169,6 +185,7 @@ module.exports = {
   deletePendingRequestById,
   countFriends,
   findFriends,
+  getFriendsSummary,
   countIncomingRequests,
   findIncomingRequests,
   countOutgoingRequests,

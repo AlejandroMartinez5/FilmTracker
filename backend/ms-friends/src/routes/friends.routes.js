@@ -4,6 +4,9 @@ const { authenticateToken } = require("../middlewares/auth.middleware");
 
 const router = express.Router();
 
+router.get("/user/:authId/summary", friendsController.getFriendsSummary);
+router.get("/user/:authId", friendsController.getPublicFriends);
+
 router.use(authenticateToken);
 
 router.post("/requests", friendsController.sendFriendRequest);

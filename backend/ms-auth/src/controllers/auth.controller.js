@@ -123,6 +123,27 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const changePassword = async (req, res) => {
+  try {
+    const authId = req.user.authId;
+    const { currentPassword, newPassword } = req.body;
+
+    await authService.changePassword({
+      authId,
+      currentPassword,
+      newPassword
+    });
+
+    return res.status(200).json({
+      message: "Contrasena cambiada correctamente"
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
+    });
+  }
+};
+
 module.exports = {
   healthCheck,
   register,
@@ -130,5 +151,6 @@ module.exports = {
   verifyEmail,
   resendVerificationEmail,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  changePassword
 };

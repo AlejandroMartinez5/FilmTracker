@@ -8,6 +8,10 @@ const findByUsername = async (username) => {
   return Auth.findOne({ username });
 };
 
+const findById = async (id) => {
+  return Auth.findById(id);
+};
+
 const findByEmailVerificationToken = async (token) => {
   return Auth.findOne({
     emailVerificationToken: token,
@@ -37,6 +41,7 @@ const deleteById = async (id) => {
 module.exports = {
   findByEmail,
   findByUsername,
+  findById,
   findByEmailVerificationToken,
   findByPasswordResetToken,
   createAuthUser,

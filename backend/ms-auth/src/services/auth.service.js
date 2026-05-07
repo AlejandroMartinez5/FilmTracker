@@ -332,11 +332,54 @@ const resetPassword = async ({ token, password }) => {
   };
 };
 
+const changePassword = async ({ authId, currentPassword, newPassword }) => {
+  if (!authId) {
+    const error = new Error("No autorizado");
+    error.status = 401;
+    throw error;
+  }
+
+  if (!currentPassword || !newPassword) {
+    throwBadRequest("currentPassword y newPassword son obligatorios");
+  }
+
+  if (newPassword.length < 6) {
+    throwBadRequest("La nueva contrasena debe tener al menos 6 caracteres");
+  }
+
+  const user = await repository.findById(authId);
+
+  if (!user) {
+    const error = new Error("Usuario no encontrado");
+    error.status = 404;
+    throw error;
+  }
+
+  const valid = await bcrypt.compare(currentPassword, user.password);
+
+  if (!valid) {
+    const error = new Error("La contrasena actual es incorrecta");
+    error.status = 401;
+    throw error;
+  }
+
+  user.password = await bcrypt.hash(newPassword, 10);
+  user.passwordResetToken = null;
+  user.passwordResetExpires = null;
+  await user.save();
+
+  return {
+    id: user._id,
+    email: user.email
+  };
+};
+
 module.exports = {
   register,
   login,
   verifyEmail,
   resendVerificationEmail,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  changePassword
 };

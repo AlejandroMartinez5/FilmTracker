@@ -30,8 +30,8 @@ const isValidUrl = (value) => {
   }
 };
 
-const createPlainToken = () => {
-  return crypto.randomBytes(32).toString("hex");
+const createNumericCode = () => {
+  return crypto.randomInt(100000, 1000000).toString();
 };
 
 const hashToken = (token) => {
@@ -47,7 +47,7 @@ const addMinutes = (minutes) => {
 };
 
 const buildVerificationData = () => {
-  const code = crypto.randomInt(100000, 1000000).toString();
+  const code = createNumericCode();
 
   return {
     code,
@@ -288,15 +288,15 @@ const forgotPassword = async ({ email }) => {
     return { passwordResetEmailSent: false };
   }
 
-  const token = createPlainToken();
+  const code = createNumericCode();
 
-  user.passwordResetToken = hashToken(token);
+  user.passwordResetToken = hashToken(code);
   user.passwordResetExpires = addMinutes(15);
   await user.save();
 
   const mailResult = await sendPasswordResetEmail({
     email: user.email,
-    token
+    code
   });
 
   return {
@@ -306,7 +306,7 @@ const forgotPassword = async ({ email }) => {
 
 const resetPassword = async ({ token, password }) => {
   if (!token || !password) {
-    throwBadRequest("token y password son obligatorios");
+    throwBadRequest("codigo y password son obligatorios");
   }
 
   if (password.length < 6) {
@@ -316,7 +316,7 @@ const resetPassword = async ({ token, password }) => {
   const user = await repository.findByPasswordResetToken(hashToken(token));
 
   if (!user) {
-    const error = new Error("Token de recuperacion invalido o expirado");
+    const error = new Error("Codigo de recuperacion invalido o expirado");
     error.status = 400;
     throw error;
   }

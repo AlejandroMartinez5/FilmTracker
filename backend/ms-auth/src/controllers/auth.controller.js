@@ -109,9 +109,9 @@ const forgotPassword = async (req, res) => {
 
 const resetPassword = async (req, res) => {
   try {
-    const { token, password } = req.body;
+    const { token, code, password } = req.body;
 
-    await authService.resetPassword({ token, password });
+    await authService.resetPassword({ token: token || code, password });
 
     return res.status(200).json({
       message: "Contrasena actualizada correctamente"

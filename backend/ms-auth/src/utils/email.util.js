@@ -1,9 +1,5 @@
 const nodemailer = require("nodemailer");
 
-const getFrontendUrl = () => {
-  return process.env.FRONTEND_URL || process.env.APP_URL || "http://localhost:3000";
-};
-
 const hasMailConfig = () => {
   return Boolean(
     process.env.MAIL_HOST &&
@@ -56,17 +52,15 @@ const sendVerificationEmail = async ({ email, code }) => {
   });
 };
 
-const sendPasswordResetEmail = async ({ email, token }) => {
-  const url = `${getFrontendUrl()}/reset-password?token=${encodeURIComponent(token)}`;
-
+const sendPasswordResetEmail = async ({ email, code }) => {
   return sendMail({
     to: email,
     subject: "Recupera tu contrasena de ReelTrack",
     html: `
       <h1>Recuperar contrasena</h1>
-      <p>Usa este enlace para crear una nueva contrasena.</p>
-      <p><a href="${url}">Cambiar contrasena</a></p>
-      <p>Este enlace expira en 15 minutos.</p>
+      <p>Introduce este codigo en ReelTrack para crear una nueva contrasena.</p>
+      <h2 style="letter-spacing: 6px;">${code}</h2>
+      <p>Este codigo expira en 15 minutos.</p>
     `
   });
 };

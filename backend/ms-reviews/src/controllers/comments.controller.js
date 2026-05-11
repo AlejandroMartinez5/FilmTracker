@@ -27,7 +27,8 @@ const getCommentsByReview = async (req, res) => {
 
     const result = await commentsService.getCommentsByReview(
       reviewId,
-      req.query
+      req.query,
+      req.user
     );
 
     return res.status(200).json({

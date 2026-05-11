@@ -2,6 +2,7 @@ const express = require("express");
 const commentsController = require("../controllers/comments.controller");
 const {
   authenticateToken,
+  optionalAuthenticateToken,
   requireVerifiedEmail
 } = require("../middlewares/auth.middleware");
 const { uploadImage } = require("../middlewares/upload.middleware");
@@ -17,6 +18,7 @@ router.post(
 
 router.get(
   "/reviews/:reviewId/comments",
+  optionalAuthenticateToken,
   commentsController.getCommentsByReview
 );
 

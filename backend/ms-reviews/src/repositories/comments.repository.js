@@ -11,7 +11,7 @@ const createComment = async ({ reviewId, authId, content }) => {
   return result.rows[0];
 };
 
-const findByReviewId = async (reviewId, { limit, offset }) => {
+const findByReviewId = async (reviewId, { limit, offset }, authId = null) => {
   const query = `
     WITH paginated_comments AS (
       SELECT *
@@ -22,7 +22,13 @@ const findByReviewId = async (reviewId, { limit, offset }) => {
     )
     SELECT 
       c.*,
-      COALESCE(cl.likes_count, 0) AS likes_count
+      COALESCE(cl.likes_count, 0) AS likes_count,
+      EXISTS (
+        SELECT 1
+        FROM comment_likes user_like
+        WHERE user_like.comment_id = c.id
+          AND user_like.auth_id = $4
+      ) AS liked_by_me
     FROM paginated_comments c
     LEFT JOIN (
       SELECT comment_id, COUNT(*) AS likes_count
@@ -32,7 +38,7 @@ const findByReviewId = async (reviewId, { limit, offset }) => {
     ORDER BY c.created_at ASC
   `;
 
-  const result = await pool.query(query, [reviewId, limit, offset]);
+  const result = await pool.query(query, [reviewId, limit, offset, authId]);
   return result.rows;
 };
 

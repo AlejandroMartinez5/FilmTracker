@@ -60,7 +60,7 @@ const createComment = async (reviewId, { content }, user) => {
   return comment;
 };
 
-const getCommentsByReview = async (reviewId, paginationQuery) => {
+const getCommentsByReview = async (reviewId, paginationQuery, user = null) => {
   validateId(reviewId, "El reviewId debe ser válido");
 
   const review = await reviewsRepository.findById(reviewId);
@@ -75,7 +75,8 @@ const getCommentsByReview = async (reviewId, paginationQuery) => {
   const total = await commentsRepository.countByReviewId(Number(reviewId));
   const comments = await commentsRepository.findByReviewId(
     Number(reviewId),
-    paginationParams
+    paginationParams,
+    user?.authId || null
   );
 
   return {

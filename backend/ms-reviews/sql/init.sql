@@ -45,3 +45,9 @@ ON reviews (auth_id, created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_comments_review_created
 ON comments (review_id, created_at ASC);
+
+CREATE INDEX IF NOT EXISTS idx_review_likes_created_review
+ON review_likes (created_at DESC, review_id);
+
+CREATE INDEX IF NOT EXISTS idx_comment_likes_created_comment
+ON comment_likes (created_at DESC, comment_id);

@@ -14,6 +14,16 @@ const ensureSchema = async () => {
     ALTER TABLE comments
     ADD COLUMN IF NOT EXISTS image_url TEXT
   `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_review_likes_created_review
+    ON review_likes (created_at DESC, review_id)
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_comment_likes_created_comment
+    ON comment_likes (created_at DESC, comment_id)
+  `);
 };
 
 const testConnection = async (retries = 10, delay = 5000) => {

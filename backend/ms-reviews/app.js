@@ -4,6 +4,7 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const reviewsRoutes = require("./src/routes/reviews.routes");
 const commentsRoutes = require("./src/routes/comments.routes");
+const leaderboardsRoutes = require("./src/routes/leaderboards.routes");
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/api", commentsRoutes);
+app.use("/api/leaderboards", leaderboardsRoutes);
 app.use("/api/reviews", reviewsRoutes);
 
 

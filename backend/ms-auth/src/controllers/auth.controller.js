@@ -69,9 +69,15 @@ const verifyEmail = async (req, res) => {
       data: result
     });
   } catch (error) {
-    return res.status(error.status || 500).json({
+    const response = {
       message: error.message || "Error interno del servidor"
-    });
+    };
+
+    if (error.data) {
+      response.data = error.data;
+    }
+
+    return res.status(error.status || 500).json(response);
   }
 };
 
@@ -144,6 +150,109 @@ const changePassword = async (req, res) => {
   }
 };
 
+const updateUsername = async (req, res) => {
+  try {
+    const authId = req.user.authId;
+    const { username } = req.body;
+
+    const result = await authService.updateUsername({
+      authId,
+      username
+    });
+
+    return res.status(200).json({
+      message: "Username actualizado correctamente",
+      data: result
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
+    });
+  }
+};
+
+const getAccountStatus = async (req, res) => {
+  try {
+    const { authId } = req.params;
+
+    const result = await authService.getAccountStatus(authId);
+
+    return res.status(200).json({
+      message: "Estado de cuenta obtenido correctamente",
+      data: result
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
+    });
+  }
+};
+
+const suspendUser = async (req, res) => {
+  try {
+    const { authId } = req.params;
+    const { suspendedUntil, reason } = req.body;
+
+    const result = await authService.suspendUser({
+      authId,
+      suspendedUntil,
+      reason,
+      adminAuthId: req.user.authId
+    });
+
+    return res.status(200).json({
+      message: "Usuario suspendido correctamente",
+      data: result
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
+    });
+  }
+};
+
+const banUser = async (req, res) => {
+  try {
+    const { authId } = req.params;
+    const { reason } = req.body;
+
+    const result = await authService.banUser({
+      authId,
+      reason,
+      adminAuthId: req.user.authId
+    });
+
+    return res.status(200).json({
+      message: "Usuario baneado correctamente",
+      data: result
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
+    });
+  }
+};
+
+const unbanUser = async (req, res) => {
+  try {
+    const { authId } = req.params;
+
+    const result = await authService.unbanUser({
+      authId,
+      adminAuthId: req.user.authId
+    });
+
+    return res.status(200).json({
+      message: "Usuario reactivado correctamente",
+      data: result
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
+    });
+  }
+};
+
 module.exports = {
   healthCheck,
   register,
@@ -152,5 +261,10 @@ module.exports = {
   resendVerificationEmail,
   forgotPassword,
   resetPassword,
-  changePassword
+  changePassword,
+  updateUsername,
+  getAccountStatus,
+  suspendUser,
+  banUser,
+  unbanUser
 };

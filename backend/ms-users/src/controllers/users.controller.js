@@ -39,6 +39,40 @@ const searchUsers = async (req, res) => {
   }
 };
 
+const searchUsersForAdmin = async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    const users = await usersService.searchUsersForAdmin(q);
+
+    return res.status(200).json({
+      message: "Usuarios encontrados",
+      data: users
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
+    });
+  }
+};
+
+const getAdminProfileByAuthId = async (req, res) => {
+  try {
+    const { authId } = req.params;
+
+    const profile = await usersService.getAdminProfileByAuthId(authId);
+
+    return res.status(200).json({
+      message: "Perfil admin obtenido correctamente",
+      data: profile
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
+    });
+  }
+};
+
 const updateProfile = async (req, res) => {
   try {
     const authId = req.user.authId;
@@ -94,6 +128,22 @@ const uploadProfilePhoto = async (req, res) => {
   }
 };
 
+const removeProfilePhoto = async (req, res) => {
+  try {
+    const { authId } = req.params;
+    const updatedProfile = await usersService.removeProfilePhoto(authId, req.user);
+
+    return res.status(200).json({
+      message: "Foto de perfil removida correctamente",
+      data: updatedProfile
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error al remover la foto de perfil"
+    });
+  }
+};
+
 const getPublicProfileByAuthId = async (req, res) => {
   try {
     const { authId } = req.params;
@@ -116,7 +166,10 @@ module.exports = {
   getProfile,
   updateProfile,
   uploadProfilePhoto,
+  removeProfilePhoto,
   searchUsers,
+  searchUsersForAdmin,
+  getAdminProfileByAuthId,
   getPublicProfileByUsername,
   getPublicProfileByAuthId
 };

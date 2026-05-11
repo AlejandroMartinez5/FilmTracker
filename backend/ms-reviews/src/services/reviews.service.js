@@ -115,6 +115,24 @@ const getReviewsByUser = async (authId, paginationQuery) => {
   };
 };
 
+const getReviewById = async (reviewId) => {
+  if (!reviewId || isNaN(reviewId)) {
+    const error = new Error("El reviewId debe ser valido");
+    error.status = 400;
+    throw error;
+  }
+
+  const review = await reviewsRepository.findById(Number(reviewId));
+
+  if (!review) {
+    const error = new Error("Resena no encontrada");
+    error.status = 404;
+    throw error;
+  }
+
+  return review;
+};
+
 const getUserReviewsSummary = async (authId) => {
   const normalizedAuthId = authId?.trim();
 
@@ -266,6 +284,46 @@ const uploadReviewImage = async (reviewId, file, user) => {
   }
 };
 
+const removeReviewImage = async (reviewId, user) => {
+  if (!reviewId || isNaN(reviewId)) {
+    const error = new Error("El reviewId debe ser valido");
+    error.status = 400;
+    throw error;
+  }
+
+  const review = await reviewsRepository.findById(reviewId);
+
+  if (!review) {
+    const error = new Error("Resena no encontrada");
+    error.status = 404;
+    throw error;
+  }
+
+  const isOwner = review.auth_id === user.authId;
+  const isAdmin = user.role === "ADMIN";
+
+  if (!isOwner && !isAdmin) {
+    const error = new Error("No tienes permisos para quitar esta imagen");
+    error.status = 403;
+    throw error;
+  }
+
+  const updatedReview = await reviewsRepository.updateReviewImage({
+    reviewId: Number(reviewId),
+    imageUrl: null
+  });
+
+  await Promise.allSettled([
+    mediaClient.deleteReviewImage(Number(reviewId))
+  ]);
+
+  return {
+    reviewId: Number(reviewId),
+    imageUrl: null,
+    review: updatedReview
+  };
+};
+
 const likeReview = async (reviewId, user) => {
   if (!reviewId || isNaN(reviewId)) {
     const error = new Error("El reviewId debe ser válido");
@@ -347,10 +405,12 @@ module.exports = {
   createReview,
   getReviewsByShow,
   getReviewsByUser,
+  getReviewById,
   getUserReviewsSummary,
   updateReview,
   deleteReview,
   uploadReviewImage,
+  removeReviewImage,
   likeReview,
   unlikeReview,
   getReviewLikes

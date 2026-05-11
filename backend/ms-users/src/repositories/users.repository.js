@@ -20,6 +20,10 @@ const updateUserById = async (id, data) => {
   return User.findByIdAndUpdate(id, data, { new: true });
 };
 
+const updateUserByAuthId = async (authId, data) => {
+  return User.findOneAndUpdate({ authId }, data, { new: true });
+};
+
 const searchUsers = async (query) => {
   return User.find({
     $or: [
@@ -28,6 +32,18 @@ const searchUsers = async (query) => {
     ]
   })
     .select("_id name username profileImage")
+    .limit(20);
+};
+
+const searchUsersForAdmin = async (query) => {
+  return User.find({
+    $or: [
+      { name: { $regex: query, $options: "i" } },
+      { username: { $regex: query, $options: "i" } },
+      { email: { $regex: query, $options: "i" } }
+    ]
+  })
+    .select("_id authId name username email profileImage role isEmailVerified createdAt updatedAt")
     .limit(20);
 };
 
@@ -47,7 +63,9 @@ module.exports = {
   findByEmail,
   findByUsername,
   updateUserById,
+  updateUserByAuthId,
   searchUsers,
+  searchUsersForAdmin,
   findByUsernamePublic,
   findByAuthIdPublic
 };

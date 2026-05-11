@@ -2,7 +2,11 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const repository = require("../repositories/auth.repository");
 const { signToken } = require("../utils/jwt.util");
-const { publishUserCreated } = require("../utils/broker.util");
+const {
+  publishUserCreated,
+  publishUserEmailVerified,
+  publishUsernameUpdated
+} = require("../utils/broker.util");
 const { requestUsernameAvailability } = require("../utils/username-check.util");
 const {
   sendVerificationEmail,
@@ -56,6 +60,71 @@ const buildVerificationData = () => {
   };
 };
 
+const validateUsername = (username) => {
+  const normalizedUsername = username?.trim().toLowerCase();
+
+  if (!normalizedUsername) {
+    throwBadRequest("username es obligatorio");
+  }
+
+  if (!usernameRegex.test(normalizedUsername)) {
+    throwBadRequest(
+      "El username debe tener entre 3 y 30 caracteres y solo puede contener letras, numeros, punto o guion bajo"
+    );
+  }
+
+  return normalizedUsername;
+};
+
+const buildAccountStatusResponse = (user) => {
+  return {
+    id: user._id,
+    email: user.email,
+    username: user.username,
+    role: user.role,
+    accountStatus: user.accountStatus,
+    suspendedUntil: user.suspendedUntil,
+    moderationReason: user.moderationReason,
+    moderatedAt: user.moderatedAt,
+    moderatedByAuthId: user.moderatedByAuthId
+  };
+};
+
+const ensureAccountCanLogin = async (user) => {
+  if (user.accountStatus === "BANNED") {
+    const error = new Error("Cuenta baneada");
+    error.status = 403;
+    error.data = {
+      accountStatus: user.accountStatus,
+      moderationReason: user.moderationReason,
+      moderatedAt: user.moderatedAt
+    };
+    throw error;
+  }
+
+  if (user.accountStatus === "SUSPENDED") {
+    if (user.suspendedUntil && user.suspendedUntil <= new Date()) {
+      user.accountStatus = "ACTIVE";
+      user.suspendedUntil = null;
+      user.moderationReason = null;
+      user.moderatedAt = null;
+      user.moderatedByAuthId = null;
+      await user.save();
+      return;
+    }
+
+    const error = new Error("Cuenta suspendida temporalmente");
+    error.status = 403;
+    error.data = {
+      accountStatus: user.accountStatus,
+      suspendedUntil: user.suspendedUntil,
+      moderationReason: user.moderationReason,
+      moderatedAt: user.moderatedAt
+    };
+    throw error;
+  }
+};
+
 const register = async ({ email, password, name, username, profileImage }) => {
   const normalizedEmail = email?.trim().toLowerCase();
   const normalizedName = name?.trim();
@@ -73,11 +142,7 @@ const register = async ({ email, password, name, username, profileImage }) => {
     throwBadRequest("El nombre debe tener entre 2 y 40 caracteres");
   }
 
-  if (!usernameRegex.test(normalizedUsername)) {
-    throwBadRequest(
-      "El username debe tener entre 3 y 30 caracteres y solo puede contener letras, numeros, punto o guion bajo"
-    );
-  }
+  validateUsername(normalizedUsername);
 
   if (profileImage && !isValidUrl(profileImage)) {
     throwBadRequest("La imagen de perfil debe ser una URL valida");
@@ -151,6 +216,7 @@ const register = async ({ email, password, name, username, profileImage }) => {
     email: authUser.email,
     username: authUser.username,
     role: authUser.role,
+    accountStatus: authUser.accountStatus,
     emailVerified: authUser.emailVerified,
     verificationEmailSent
   };
@@ -170,6 +236,8 @@ const login = async ({ email, password }) => {
     throw error;
   }
 
+  await ensureAccountCanLogin(user);
+
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) {
     const error = new Error("Credenciales invalidas");
@@ -181,6 +249,7 @@ const login = async ({ email, password }) => {
     authId: user._id.toString(),
     email: user.email,
     role: user.role,
+    accountStatus: user.accountStatus,
     emailVerified: user.emailVerified
   });
 
@@ -190,6 +259,7 @@ const login = async ({ email, password }) => {
       email: user.email,
       username: user.username,
       role: user.role,
+      accountStatus: user.accountStatus,
       emailVerified: user.emailVerified
     },
     token
@@ -236,6 +306,67 @@ const verifyEmail = async ({ email, code }) => {
   user.emailVerificationToken = null;
   user.emailVerificationExpires = null;
   await user.save();
+  await publishUserEmailVerified({
+    authId: user._id.toString(),
+    emailVerified: user.emailVerified
+  });
+
+  return {
+    id: user._id,
+    email: user.email,
+    username: user.username,
+    role: user.role,
+    emailVerified: user.emailVerified
+  };
+};
+
+const updateUsername = async ({ authId, username }) => {
+  if (!authId) {
+    const error = new Error("No autorizado");
+    error.status = 401;
+    throw error;
+  }
+
+  const normalizedUsername = validateUsername(username);
+  const user = await repository.findById(authId);
+
+  if (!user) {
+    const error = new Error("Usuario no encontrado");
+    error.status = 404;
+    throw error;
+  }
+
+  if (user.username === normalizedUsername) {
+    return {
+      id: user._id,
+      email: user.email,
+      username: user.username,
+      role: user.role,
+      emailVerified: user.emailVerified
+    };
+  }
+
+  const usernameReserved = await repository.findByUsername(normalizedUsername);
+  if (usernameReserved && usernameReserved._id.toString() !== user._id.toString()) {
+    throwBadRequest("El username ya esta en uso");
+  }
+
+  user.username = normalizedUsername;
+
+  try {
+    await user.save();
+  } catch (error) {
+    if (isDuplicateKeyError(error)) {
+      throwBadRequest("El username ya esta en uso");
+    }
+
+    throw error;
+  }
+
+  await publishUsernameUpdated({
+    authId: user._id.toString(),
+    username: user.username
+  });
 
   return {
     id: user._id,
@@ -374,6 +505,94 @@ const changePassword = async ({ authId, currentPassword, newPassword }) => {
   };
 };
 
+const getAccountStatus = async (authId) => {
+  if (!authId) {
+    throwBadRequest("authId es obligatorio");
+  }
+
+  const user = await repository.findById(authId);
+
+  if (!user) {
+    const error = new Error("Usuario no encontrado");
+    error.status = 404;
+    throw error;
+  }
+
+  return buildAccountStatusResponse(user);
+};
+
+const suspendUser = async ({ authId, suspendedUntil, reason, adminAuthId }) => {
+  if (!authId) {
+    throwBadRequest("authId es obligatorio");
+  }
+
+  const until = new Date(suspendedUntil);
+
+  if (!suspendedUntil || Number.isNaN(until.getTime()) || until <= new Date()) {
+    throwBadRequest("suspendedUntil debe ser una fecha futura valida");
+  }
+
+  const user = await repository.updateById(authId, {
+    accountStatus: "SUSPENDED",
+    suspendedUntil: until,
+    moderationReason: reason?.trim() || null,
+    moderatedAt: new Date(),
+    moderatedByAuthId: adminAuthId
+  });
+
+  if (!user) {
+    const error = new Error("Usuario no encontrado");
+    error.status = 404;
+    throw error;
+  }
+
+  return buildAccountStatusResponse(user);
+};
+
+const banUser = async ({ authId, reason, adminAuthId }) => {
+  if (!authId) {
+    throwBadRequest("authId es obligatorio");
+  }
+
+  const user = await repository.updateById(authId, {
+    accountStatus: "BANNED",
+    suspendedUntil: null,
+    moderationReason: reason?.trim() || null,
+    moderatedAt: new Date(),
+    moderatedByAuthId: adminAuthId
+  });
+
+  if (!user) {
+    const error = new Error("Usuario no encontrado");
+    error.status = 404;
+    throw error;
+  }
+
+  return buildAccountStatusResponse(user);
+};
+
+const unbanUser = async ({ authId, adminAuthId }) => {
+  if (!authId) {
+    throwBadRequest("authId es obligatorio");
+  }
+
+  const user = await repository.updateById(authId, {
+    accountStatus: "ACTIVE",
+    suspendedUntil: null,
+    moderationReason: null,
+    moderatedAt: new Date(),
+    moderatedByAuthId: adminAuthId
+  });
+
+  if (!user) {
+    const error = new Error("Usuario no encontrado");
+    error.status = 404;
+    throw error;
+  }
+
+  return buildAccountStatusResponse(user);
+};
+
 module.exports = {
   register,
   login,
@@ -381,5 +600,10 @@ module.exports = {
   resendVerificationEmail,
   forgotPassword,
   resetPassword,
-  changePassword
+  changePassword,
+  updateUsername,
+  getAccountStatus,
+  suspendUser,
+  banUser,
+  unbanUser
 };

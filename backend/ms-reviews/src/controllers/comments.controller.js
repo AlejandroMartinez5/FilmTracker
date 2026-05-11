@@ -42,6 +42,22 @@ const getCommentsByReview = async (req, res) => {
   }
 };
 
+const getCommentById = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+
+    const comment = await commentsService.getCommentById(commentId);
+
+    return res.status(200).json({
+      comment
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error al obtener comentario"
+    });
+  }
+};
+
 const updateComment = async (req, res) => {
   try {
     const { commentId } = req.params;
@@ -100,6 +116,22 @@ const uploadCommentImage = async (req, res) => {
   }
 };
 
+const removeCommentImage = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    const result = await commentsService.removeCommentImage(commentId, req.user);
+
+    return res.status(200).json({
+      message: "Imagen de comentario removida correctamente",
+      data: result
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error al remover la imagen del comentario"
+    });
+  }
+};
+
 const likeComment = async (req, res) => {
   try {
     const { commentId } = req.params;
@@ -151,9 +183,11 @@ const getCommentLikes = async (req, res) => {
 module.exports = {
   createComment,
   getCommentsByReview,
+  getCommentById,
   updateComment,
   deleteComment,
   uploadCommentImage,
+  removeCommentImage,
   likeComment,
   unlikeComment,
   getCommentLikes

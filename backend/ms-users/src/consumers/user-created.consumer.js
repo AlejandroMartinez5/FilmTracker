@@ -6,6 +6,11 @@ const QUEUE_NAME = "user_created_queue_v2";
 const DLX_NAME = "user_events_dlx";
 const DLQ_NAME = "user_created_dlq_v2";
 const DLQ_ROUTING_KEY = "user.created.failed";
+const USER_EVENTS = {
+  CREATED: "user.created",
+  EMAIL_VERIFIED: "user.email_verified",
+  USERNAME_UPDATED: "user.username_updated"
+};
 
 let connection = null;
 let channel = null;
@@ -22,6 +27,36 @@ const isPermanentError = (error) => {
   }
 
   return false;
+};
+
+const normalizeEvent = (rawEvent) => {
+  if (rawEvent.type && rawEvent.payload) {
+    return rawEvent;
+  }
+
+  return {
+    type: USER_EVENTS.CREATED,
+    payload: rawEvent
+  };
+};
+
+const handleUserEvent = async (rawEvent) => {
+  const event = normalizeEvent(rawEvent);
+
+  if (event.type === USER_EVENTS.CREATED) {
+    return usersService.createInitialProfile(event.payload);
+  }
+
+  if (event.type === USER_EVENTS.EMAIL_VERIFIED) {
+    return usersService.markEmailVerified(event.payload);
+  }
+
+  if (event.type === USER_EVENTS.USERNAME_UPDATED) {
+    return usersService.syncUsernameFromAuth(event.payload);
+  }
+
+  console.log("[ms-users] Evento de usuario ignorado:", event.type);
+  return null;
 };
 
 const consumeUserCreated = async () => {
@@ -73,8 +108,8 @@ const consumeUserCreated = async () => {
         if (!msg) return;
 
         try {
-          const userData = JSON.parse(msg.content.toString());
-          await usersService.createInitialProfile(userData);
+          const userEvent = JSON.parse(msg.content.toString());
+          await handleUserEvent(userEvent);
           channel.ack(msg);
         } catch (error) {
           console.error("[ms-users] Error procesando user.created:", error);

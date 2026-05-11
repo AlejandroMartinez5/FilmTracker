@@ -70,6 +70,27 @@ services:
     networks:
       - FilmTrack-network
 
+  postgres-moderation:
+    image: postgres:16
+    container_name: postgres-moderation
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: reeltrack_moderation_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_moderation_data:/var/lib/postgresql/data
+      - ./ms-moderation/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d reeltrack_moderation_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 90s
+    networks:
+      - FilmTrack-network
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -103,9 +124,12 @@ services:
     build: ./ms-users
     ports:
       - "3002:3002"
+    volumes:
+      - ./ms-auth/src/keys/public.key:/app/src/keys/public.key:ro
     env_file:
       - ./ms-users/.env
     environment:
+      JWT_PUBLIC_KEY_PATH: /app/src/keys/public.key
       MEDIA_GRPC_URL: media-service:50051
       MAX_IMAGE_UPLOAD_BYTES: 5242880
     depends_on:
@@ -134,8 +158,12 @@ services:
     build: ./ms-users-library
     ports:
       - "3004:3004"
+    volumes:
+      - ./ms-auth/src/keys/public.key:/app/src/keys/public.key:ro
     env_file:
       - ./ms-users-library/.env
+    environment:
+      JWT_PUBLIC_KEY_PATH: /app/src/keys/public.key
     depends_on:
       postgres-users-library:
         condition: service_healthy
@@ -146,6 +174,8 @@ services:
     build: ./ms-reviews
     ports:
       - "3005:3005"
+    volumes:
+      - ./ms-auth/src/keys/public.key:/app/src/keys/public.key:ro
     environment:
       PORT: 3005
       DATABASE_URL: postgres://postgres:postgres@postgres-reviews:5432/reeltrack_reviews_db
@@ -178,6 +208,31 @@ services:
     networks:
       - FilmTrack-network
 
+  moderation-service:
+    build: ./ms-moderation
+    ports:
+      - "3007:3007"
+    volumes:
+      - ./ms-auth/src/keys/public.key:/app/src/keys/public.key:ro
+    environment:
+      PORT: 3007
+      DATABASE_URL: postgresql://postgres:postgres@postgres-moderation:5432/reeltrack_moderation_db
+      JWT_PUBLIC_KEY_PATH: /app/src/keys/public.key
+      AUTH_SERVICE_URL: http://auth-service:3003/api/auth
+      REVIEWS_SERVICE_URL: http://reviews-service:3005/api
+      USERS_SERVICE_URL: http://user-service:3002/api/users
+    depends_on:
+      postgres-moderation:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      reviews-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+    networks:
+      - FilmTrack-network
+
   media-service:
     build: ./ms-media
     ports:
@@ -203,4 +258,5 @@ volumes:
   postgres_users_library_data:
   postgres_reviews_data:
   postgres_friends_data:
+  postgres_moderation_data:
   media_uploads:

@@ -40,6 +40,24 @@ const uploadProfilePhoto = ({ authId, file }) => {
   });
 };
 
+const deleteProfilePhoto = (authId) => {
+  return new Promise((resolve, reject) => {
+    client.DeleteProfilePhoto(
+      {
+        auth_id: authId
+      },
+      (error, response) => {
+        if (error) {
+          return reject(error);
+        }
+
+        return resolve(response);
+      }
+    );
+  });
+};
+
 module.exports = {
-  uploadProfilePhoto
+  uploadProfilePhoto,
+  deleteProfilePhoto
 };

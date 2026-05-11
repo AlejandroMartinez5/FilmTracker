@@ -22,6 +22,11 @@ router.get(
   commentsController.getCommentsByReview
 );
 
+router.get(
+  "/comments/:commentId",
+  commentsController.getCommentById
+);
+
 router.put(
   "/comments/:commentId",
   authenticateToken,
@@ -39,6 +44,12 @@ router.post(
   authenticateToken,
   uploadImage,
   commentsController.uploadCommentImage
+);
+
+router.delete(
+  "/comments/:commentId/image",
+  authenticateToken,
+  commentsController.removeCommentImage
 );
 
 router.post(

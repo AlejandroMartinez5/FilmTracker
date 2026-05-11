@@ -26,6 +26,7 @@ router.get("/user/:authId/summary", reviewsController.getUserReviewsSummary);
 router.get("/user/:authId", reviewsController.getReviewsByUser);
 
 router.get("/:reviewId/likes", reviewsController.getReviewLikes);
+router.get("/:reviewId", reviewsController.getReviewById);
 
 router.put("/:reviewId", authenticateToken, reviewsController.updateReview);
 
@@ -34,6 +35,12 @@ router.post(
   authenticateToken,
   uploadImage,
   reviewsController.uploadReviewImage
+);
+
+router.delete(
+  "/:reviewId/image",
+  authenticateToken,
+  reviewsController.removeReviewImage
 );
 
 router.delete("/:reviewId", authenticateToken, reviewsController.deleteReview);

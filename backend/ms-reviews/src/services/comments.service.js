@@ -89,6 +89,20 @@ const getCommentsByReview = async (reviewId, paginationQuery, user = null) => {
   };
 };
 
+const getCommentById = async (commentId) => {
+  validateId(commentId, "El commentId debe ser valido");
+
+  const comment = await commentsRepository.findById(Number(commentId));
+
+  if (!comment) {
+    const error = new Error("Comentario no encontrado");
+    error.status = 404;
+    throw error;
+  }
+
+  return comment;
+};
+
 const updateComment = async (commentId, { content }, user) => {
   validateId(commentId, "El commentId debe ser válido");
   validateCommentContent(content);
@@ -197,6 +211,43 @@ const uploadCommentImage = async (commentId, file, user) => {
   }
 };
 
+const removeCommentImage = async (commentId, user) => {
+  validateId(commentId, "El commentId debe ser valido");
+
+  const comment = await commentsRepository.findById(commentId);
+
+  if (!comment) {
+    const error = new Error("Comentario no encontrado");
+    error.status = 404;
+    throw error;
+  }
+
+  const isOwner = comment.auth_id === user.authId;
+  const isAdmin = user.role === "ADMIN";
+
+  if (!isOwner && !isAdmin) {
+    const error = new Error("No tienes permisos para quitar esta imagen");
+    error.status = 403;
+    throw error;
+  }
+
+  const updatedComment = await commentsRepository.updateCommentImage({
+    commentId: Number(commentId),
+    imageUrl: null
+  });
+
+  await Promise.allSettled([
+    mediaClient.deleteCommentImage(Number(commentId))
+  ]);
+
+  return {
+    commentId: Number(commentId),
+    reviewId: Number(comment.review_id),
+    imageUrl: null,
+    comment: updatedComment
+  };
+};
+
 const likeComment = async (commentId, user) => {
   validateId(commentId, "El commentId debe ser válido");
 
@@ -265,9 +316,11 @@ const getCommentLikes = async (commentId) => {
 module.exports = {
   createComment,
   getCommentsByReview,
+  getCommentById,
   updateComment,
   deleteComment,
   uploadCommentImage,
+  removeCommentImage,
   likeComment,
   unlikeComment,
   getCommentLikes

@@ -53,6 +53,22 @@ const getReviewsByUser = async (req, res) => {
   }
 };
 
+const getReviewById = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+
+    const review = await reviewsService.getReviewById(reviewId);
+
+    return res.status(200).json({
+      review
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error al obtener la resena"
+    });
+  }
+};
+
 const getUserReviewsSummary = async (req, res) => {
   try {
     const { authId } = req.params;
@@ -122,6 +138,22 @@ const uploadReviewImage = async (req, res) => {
   }
 };
 
+const removeReviewImage = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    const result = await reviewsService.removeReviewImage(reviewId, req.user);
+
+    return res.status(200).json({
+      message: "Imagen de resena removida correctamente",
+      data: result
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error al remover la imagen de la resena"
+    });
+  }
+};
+
 const likeReview = async (req, res) => {
   try {
     const { reviewId } = req.params;
@@ -168,10 +200,12 @@ module.exports = {
   createReview,
   getReviewsByShow,
   getReviewsByUser,
+  getReviewById,
   getUserReviewsSummary,
   updateReview,
   deleteReview,
   uploadReviewImage,
+  removeReviewImage,
   likeReview,
   unlikeReview,
   getReviewLikes

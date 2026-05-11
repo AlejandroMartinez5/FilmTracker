@@ -142,22 +142,16 @@ const updateProfile = async (authId, { name, username, profileImage }) => {
 
   const updateData = {};
 
-  if (name !== undefined) {
-    updateData.name = validateName(name);
+  if (username !== undefined) {
+    const error = new Error(
+      "El username se actualiza desde el servicio de autenticacion"
+    );
+    error.status = 400;
+    throw error;
   }
 
-  if (username !== undefined) {
-    const normalizedUsername = validateUsername(username);
-
-    const existingUser = await usersRepository.findByUsername(normalizedUsername);
-
-    if (existingUser && existingUser._id.toString() !== user._id.toString()) {
-      const error = new Error("El username ya está en uso");
-      error.status = 400;
-      throw error;
-    }
-
-    updateData.username = normalizedUsername;
+  if (name !== undefined) {
+    updateData.name = validateName(name);
   }
 
   if (profileImage !== undefined) {
@@ -190,6 +184,51 @@ const checkUsernameAvailability = async (username) => {
   };
 };
 
+const markEmailVerified = async ({ authId, emailVerified }) => {
+  const normalizedAuthId = authId?.trim();
+
+  if (!normalizedAuthId) {
+    const error = new Error("authId es obligatorio");
+    error.status = 400;
+    throw error;
+  }
+
+  const updatedUser = await usersRepository.updateUserByAuthId(normalizedAuthId, {
+    isEmailVerified: emailVerified === true
+  });
+
+  if (!updatedUser) {
+    const error = new Error("Usuario no encontrado");
+    error.status = 404;
+    throw error;
+  }
+
+  return updatedUser;
+};
+
+const syncUsernameFromAuth = async ({ authId, username }) => {
+  const normalizedAuthId = authId?.trim();
+  const normalizedUsername = validateUsername(username);
+
+  if (!normalizedAuthId) {
+    const error = new Error("authId es obligatorio");
+    error.status = 400;
+    throw error;
+  }
+
+  const updatedUser = await usersRepository.updateUserByAuthId(normalizedAuthId, {
+    username: normalizedUsername
+  });
+
+  if (!updatedUser) {
+    const error = new Error("Usuario no encontrado");
+    error.status = 404;
+    throw error;
+  }
+
+  return updatedUser;
+};
+
 const searchUsers = async (query) => {
   if (!query || !query.trim()) {
     return [];
@@ -205,6 +244,59 @@ const searchUsers = async (query) => {
     username: user.username,
     profileImage: user.profileImage
   }));
+};
+
+const searchUsersForAdmin = async (query) => {
+  if (!query || !query.trim()) {
+    return [];
+  }
+
+  const q = query.trim();
+  const users = await usersRepository.searchUsersForAdmin(q);
+
+  return users.map((user) => ({
+    id: user._id,
+    authId: user.authId,
+    name: user.name,
+    username: user.username,
+    email: user.email,
+    profileImage: user.profileImage,
+    role: user.role,
+    isEmailVerified: user.isEmailVerified,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt
+  }));
+};
+
+const getAdminProfileByAuthId = async (authId) => {
+  const normalizedAuthId = authId?.trim();
+
+  if (!normalizedAuthId) {
+    const error = new Error("El authId es obligatorio");
+    error.status = 400;
+    throw error;
+  }
+
+  const user = await usersRepository.findByAuthId(normalizedAuthId);
+
+  if (!user) {
+    const error = new Error("Usuario no encontrado");
+    error.status = 404;
+    throw error;
+  }
+
+  return {
+    id: user._id,
+    authId: user.authId,
+    name: user.name,
+    username: user.username,
+    email: user.email,
+    profileImage: user.profileImage,
+    role: user.role,
+    isEmailVerified: user.isEmailVerified,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt
+  };
 };
 
 const getPublicProfileByUsername = async (username) => {
@@ -273,6 +365,54 @@ const uploadProfilePhoto = async (authId, file) => {
   }
 };
 
+const removeProfilePhoto = async (authId, user) => {
+  const normalizedAuthId = authId?.trim();
+
+  if (!normalizedAuthId) {
+    const error = new Error("El authId es obligatorio");
+    error.status = 400;
+    throw error;
+  }
+
+  const isOwner = normalizedAuthId === user.authId;
+  const isAdmin = user.role === "ADMIN";
+
+  if (!isOwner && !isAdmin) {
+    const error = new Error("No tienes permisos para quitar esta foto de perfil");
+    error.status = 403;
+    throw error;
+  }
+
+  const targetUser = await usersRepository.findByAuthId(normalizedAuthId);
+
+  if (!targetUser) {
+    const error = new Error("Usuario no encontrado");
+    error.status = 404;
+    throw error;
+  }
+
+  const updatedUser = await usersRepository.updateUserById(targetUser._id, {
+    profileImage: null
+  });
+
+  await Promise.allSettled([
+    mediaClient.deleteProfilePhoto(normalizedAuthId)
+  ]);
+
+  return {
+    id: updatedUser._id,
+    authId: updatedUser.authId,
+    name: updatedUser.name,
+    username: updatedUser.username,
+    email: updatedUser.email,
+    profileImage: updatedUser.profileImage,
+    isEmailVerified: updatedUser.isEmailVerified,
+    role: updatedUser.role,
+    createdAt: updatedUser.createdAt,
+    updatedAt: updatedUser.updatedAt
+  };
+};
+
 const getPublicProfileByAuthId = async (authId) => {
   const normalizedAuthId = authId?.trim();
 
@@ -305,8 +445,13 @@ module.exports = {
   getProfile,
   updateProfile,
   uploadProfilePhoto,
+  removeProfilePhoto,
   checkUsernameAvailability,
+  markEmailVerified,
+  syncUsernameFromAuth,
   searchUsers,
+  searchUsersForAdmin,
+  getAdminProfileByAuthId,
   getPublicProfileByUsername,
   getPublicProfileByAuthId
 };

@@ -2,11 +2,26 @@ const express = require("express");
 const router = express.Router();
 
 const usersController = require("../controllers/users.controller");
-const { authenticateToken } = require("../middlewares/auth.middleware");
+const {
+  authenticateToken,
+  requireAdmin
+} = require("../middlewares/auth.middleware");
 const { uploadImage } = require("../middlewares/upload.middleware");
 
 router.get("/health", usersController.healthCheck);
 router.get("/search", usersController.searchUsers);
+router.get(
+  "/admin/search",
+  authenticateToken,
+  requireAdmin,
+  usersController.searchUsersForAdmin
+);
+router.get(
+  "/admin/users/:authId",
+  authenticateToken,
+  requireAdmin,
+  usersController.getAdminProfileByAuthId
+);
 
 router.get("/profile", authenticateToken, usersController.getProfile);
 router.put("/profile", authenticateToken, usersController.updateProfile);
@@ -15,6 +30,12 @@ router.post(
   authenticateToken,
   uploadImage,
   usersController.uploadProfilePhoto
+);
+router.delete(
+  "/admin/users/:authId/profile-photo",
+  authenticateToken,
+  requireAdmin,
+  usersController.removeProfilePhoto
 );
 
 router.get("/id/:authId", usersController.getPublicProfileByAuthId);

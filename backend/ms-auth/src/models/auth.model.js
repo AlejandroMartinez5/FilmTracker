@@ -26,6 +26,27 @@ const authSchema = new mongoose.Schema(
       enum: ["USER", "ADMIN"],
       default: "USER"
     },
+    accountStatus: {
+      type: String,
+      enum: ["ACTIVE", "SUSPENDED", "BANNED"],
+      default: "ACTIVE"
+    },
+    suspendedUntil: {
+      type: Date,
+      default: null
+    },
+    moderationReason: {
+      type: String,
+      default: null
+    },
+    moderatedAt: {
+      type: Date,
+      default: null
+    },
+    moderatedByAuthId: {
+      type: String,
+      default: null
+    },
     emailVerified: {
       type: Boolean,
       default: false

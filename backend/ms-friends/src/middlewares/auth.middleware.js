@@ -27,6 +27,8 @@ const authenticateToken = (req, res, next) => {
 
     next();
   } catch (error) {
+    console.warn("[ms-friends] Error validando token:", error.name, error.message);
+
     if (error.name === "TokenExpiredError") {
       return res.status(401).json({
         message: "Token expirado"

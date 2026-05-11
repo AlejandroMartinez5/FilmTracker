@@ -5,6 +5,7 @@ const {
   optionalAuthenticateToken,
   requireVerifiedEmail
 } = require("../middlewares/auth.middleware");
+const { uploadImage } = require("../middlewares/upload.middleware");
 
 const router = express.Router();
 
@@ -27,6 +28,13 @@ router.get("/user/:authId", reviewsController.getReviewsByUser);
 router.get("/:reviewId/likes", reviewsController.getReviewLikes);
 
 router.put("/:reviewId", authenticateToken, reviewsController.updateReview);
+
+router.post(
+  "/:reviewId/image",
+  authenticateToken,
+  uploadImage,
+  reviewsController.uploadReviewImage
+);
 
 router.delete("/:reviewId", authenticateToken, reviewsController.deleteReview);
 

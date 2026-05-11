@@ -78,6 +78,22 @@ const getPublicProfileByUsername = async (req, res) => {
   }
 };
 
+const uploadProfilePhoto = async (req, res) => {
+  try {
+    const authId = req.user.authId;
+    const updatedProfile = await usersService.uploadProfilePhoto(authId, req.file);
+
+    return res.status(200).json({
+      message: "Foto de perfil actualizada correctamente",
+      data: updatedProfile
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error al subir la foto de perfil"
+    });
+  }
+};
+
 const getPublicProfileByAuthId = async (req, res) => {
   try {
     const { authId } = req.params;
@@ -99,6 +115,7 @@ module.exports = {
   healthCheck,
   getProfile,
   updateProfile,
+  uploadProfilePhoto,
   searchUsers,
   getPublicProfileByUsername,
   getPublicProfileByAuthId

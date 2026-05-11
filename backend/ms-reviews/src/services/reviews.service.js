@@ -1,4 +1,6 @@
 const reviewsRepository = require("../repositories/reviews.repository");
+const commentsRepository = require("../repositories/comments.repository");
+const mediaClient = require("../clients/media.client");
 const {
   getPaginationParams,
   buildPaginationMeta
@@ -195,11 +197,73 @@ const deleteReview = async (reviewId, user) => {
     throw error;
   }
 
+  const commentIds = await commentsRepository.findIdsByReviewId(Number(reviewId));
+
   await reviewsRepository.deleteReview(reviewId);
+
+  await Promise.allSettled([
+    mediaClient.deleteReviewImage(Number(reviewId)),
+    ...commentIds.map((commentId) =>
+      mediaClient.deleteCommentImage(Number(commentId))
+    )
+  ]);
 
   return {
     message: "Reseña eliminada correctamente"
   };
+};
+
+const uploadReviewImage = async (reviewId, file, user) => {
+  if (!reviewId || isNaN(reviewId)) {
+    const error = new Error("El reviewId debe ser valido");
+    error.status = 400;
+    throw error;
+  }
+
+  if (!file) {
+    const error = new Error("La imagen de la resena es obligatoria");
+    error.status = 400;
+    throw error;
+  }
+
+  const review = await reviewsRepository.findById(reviewId);
+
+  if (!review) {
+    const error = new Error("Resena no encontrada");
+    error.status = 404;
+    throw error;
+  }
+
+  if (!canEditReview(review, user)) {
+    const error = new Error(
+      `Solo puedes subir imagen a tu resena durante los primeros ${REVIEW_EDIT_LIMIT_MINUTES} minutos`
+    );
+    error.status = 403;
+    throw error;
+  }
+
+  try {
+    const media = await mediaClient.uploadReviewImage({
+      reviewId: Number(reviewId),
+      authId: user.authId,
+      file
+    });
+    const updatedReview = await reviewsRepository.updateReviewImage({
+      reviewId: Number(reviewId),
+      imageUrl: media.url
+    });
+
+    return {
+      reviewId: Number(reviewId),
+      imageUrl: media.url,
+      review: updatedReview,
+      media
+    };
+  } catch (error) {
+    const customError = new Error(error.details || error.message);
+    customError.status = error.code === 3 ? 400 : 502;
+    throw customError;
+  }
 };
 
 const likeReview = async (reviewId, user) => {
@@ -286,6 +350,7 @@ module.exports = {
   getUserReviewsSummary,
   updateReview,
   deleteReview,
+  uploadReviewImage,
   likeReview,
   unlikeReview,
   getReviewLikes

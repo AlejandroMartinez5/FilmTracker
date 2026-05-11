@@ -47,6 +47,17 @@ const countByReviewId = async (reviewId) => {
   return Number(result.rows[0].total);
 };
 
+const findIdsByReviewId = async (reviewId) => {
+  const query = `
+    SELECT id
+    FROM comments
+    WHERE review_id = $1
+  `;
+
+  const result = await pool.query(query, [reviewId]);
+  return result.rows.map((row) => row.id);
+};
+
 const findById = async (commentId) => {
   const query = `
     SELECT *
@@ -80,6 +91,20 @@ const deleteComment = async (commentId) => {
   `;
 
   const result = await pool.query(query, [commentId]);
+  return result.rows[0];
+};
+
+const updateCommentImage = async ({ commentId, imageUrl }) => {
+  const query = `
+    UPDATE comments
+    SET
+      image_url = $1,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = $2
+    RETURNING *
+  `;
+
+  const result = await pool.query(query, [imageUrl, commentId]);
   return result.rows[0];
 };
 
@@ -121,9 +146,11 @@ module.exports = {
   createComment,
   findByReviewId,
   countByReviewId,
+  findIdsByReviewId,
   findById,
   updateComment,
   deleteComment,
+  updateCommentImage,
   likeComment,
   unlikeComment,
   countLikes

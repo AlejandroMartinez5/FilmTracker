@@ -1,9 +1,13 @@
 const commentsRepository = require("../repositories/comments.repository");
 const reviewsRepository = require("../repositories/reviews.repository");
+const mediaClient = require("../clients/media.client");
 const {
   getPaginationParams,
   buildPaginationMeta
 } = require("../utils/pagination.util");
+
+const COMMENT_EDIT_LIMIT_MINUTES =
+  Number(process.env.COMMENT_EDIT_LIMIT_MINUTES) || 30;
 
 const validateCommentContent = (content) => {
   if (!content || !content.trim()) {
@@ -19,6 +23,20 @@ const validateId = (id, message) => {
     error.status = 400;
     throw error;
   }
+};
+
+const canEditComment = (comment, user) => {
+  const isOwner = comment.auth_id === user.authId;
+
+  if (!isOwner) {
+    return false;
+  }
+
+  const createdAt = new Date(comment.created_at);
+  const now = new Date();
+  const diffMinutes = (now - createdAt) / (1000 * 60);
+
+  return diffMinutes <= COMMENT_EDIT_LIMIT_MINUTES;
 };
 
 const createComment = async (reviewId, { content }, user) => {
@@ -82,10 +100,10 @@ const updateComment = async (commentId, { content }, user) => {
     throw error;
   }
 
-  const isOwner = comment.auth_id === user.authId;
-
-  if (!isOwner) {
-    const error = new Error("No tienes permisos para editar este comentario");
+  if (!canEditComment(comment, user)) {
+    const error = new Error(
+      `Solo puedes editar tu comentario durante los primeros ${COMMENT_EDIT_LIMIT_MINUTES} minutos`
+    );
     error.status = 403;
     throw error;
   }
@@ -118,9 +136,64 @@ const deleteComment = async (commentId, user) => {
 
   await commentsRepository.deleteComment(Number(commentId));
 
+  await Promise.allSettled([
+    mediaClient.deleteCommentImage(Number(commentId))
+  ]);
+
   return {
     message: "Comentario eliminado correctamente"
   };
+};
+
+const uploadCommentImage = async (commentId, file, user) => {
+  validateId(commentId, "El commentId debe ser valido");
+
+  if (!file) {
+    const error = new Error("La imagen del comentario es obligatoria");
+    error.status = 400;
+    throw error;
+  }
+
+  const comment = await commentsRepository.findById(commentId);
+
+  if (!comment) {
+    const error = new Error("Comentario no encontrado");
+    error.status = 404;
+    throw error;
+  }
+
+  if (!canEditComment(comment, user)) {
+    const error = new Error(
+      `Solo puedes subir imagen a tu comentario durante los primeros ${COMMENT_EDIT_LIMIT_MINUTES} minutos`
+    );
+    error.status = 403;
+    throw error;
+  }
+
+  try {
+    const media = await mediaClient.uploadCommentImage({
+      commentId: Number(commentId),
+      reviewId: Number(comment.review_id),
+      authId: user.authId,
+      file
+    });
+    const updatedComment = await commentsRepository.updateCommentImage({
+      commentId: Number(commentId),
+      imageUrl: media.url
+    });
+
+    return {
+      commentId: Number(commentId),
+      reviewId: Number(comment.review_id),
+      imageUrl: media.url,
+      comment: updatedComment,
+      media
+    };
+  } catch (error) {
+    const customError = new Error(error.details || error.message);
+    customError.status = error.code === 3 ? 400 : 502;
+    throw customError;
+  }
 };
 
 const likeComment = async (commentId, user) => {
@@ -193,6 +266,7 @@ module.exports = {
   getCommentsByReview,
   updateComment,
   deleteComment,
+  uploadCommentImage,
   likeComment,
   unlikeComment,
   getCommentLikes

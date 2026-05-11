@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package reeltrack.media;
+
+service MediaService {
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+  rpc UploadProfilePhoto(UploadProfilePhotoRequest) returns (MediaResponse);
+  rpc UploadReviewImage(UploadReviewImageRequest) returns (MediaResponse);
+  rpc UploadCommentImage(UploadCommentImageRequest) returns (MediaResponse);
+  rpc GetProfilePhoto(GetProfilePhotoRequest) returns (MediaResponse);
+  rpc GetReviewImage(GetReviewImageRequest) returns (MediaResponse);
+  rpc GetCommentImage(GetCommentImageRequest) returns (MediaResponse);
+  rpc DeleteProfilePhoto(DeleteProfilePhotoRequest) returns (DeleteMediaResponse);
+  rpc DeleteReviewImage(DeleteReviewImageRequest) returns (DeleteMediaResponse);
+  rpc DeleteCommentImage(DeleteCommentImageRequest) returns (DeleteMediaResponse);
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  string message = 1;
+}
+
+message UploadProfilePhotoRequest {
+  string auth_id = 1;
+  string file_name = 2;
+  string content_type = 3;
+  bytes image = 4;
+}
+
+message UploadReviewImageRequest {
+  int64 review_id = 1;
+  string auth_id = 2;
+  string file_name = 3;
+  string content_type = 4;
+  bytes image = 5;
+}
+
+message UploadCommentImageRequest {
+  int64 comment_id = 1;
+  int64 review_id = 2;
+  string auth_id = 3;
+  string file_name = 4;
+  string content_type = 5;
+  bytes image = 6;
+}
+
+message GetProfilePhotoRequest {
+  string auth_id = 1;
+}
+
+message GetReviewImageRequest {
+  int64 review_id = 1;
+}
+
+message GetCommentImageRequest {
+  int64 comment_id = 1;
+}
+
+message DeleteProfilePhotoRequest {
+  string auth_id = 1;
+}
+
+message DeleteReviewImageRequest {
+  int64 review_id = 1;
+}
+
+message DeleteCommentImageRequest {
+  int64 comment_id = 1;
+}
+
+message MediaResponse {
+  string media_id = 1;
+  string owner_auth_id = 2;
+  int64 review_id = 3;
+  int64 comment_id = 4;
+  string url = 5;
+  string content_type = 6;
+  int64 size_bytes = 7;
+  string created_at = 8;
+}
+
+message DeleteMediaResponse {
+  bool deleted = 1;
+  string message = 2;
+}

@@ -105,10 +105,15 @@ services:
       - "3002:3002"
     env_file:
       - ./ms-users/.env
+    environment:
+      MEDIA_GRPC_URL: media-service:50051
+      MAX_IMAGE_UPLOAD_BYTES: 5242880
     depends_on:
       rabbitmq:
         condition: service_healthy
       mongo:
+        condition: service_started
+      media-service:
         condition: service_started
     networks:
       - FilmTrack-network
@@ -146,9 +151,14 @@ services:
       DATABASE_URL: postgres://postgres:postgres@postgres-reviews:5432/reeltrack_reviews_db
       JWT_PUBLIC_KEY_PATH: /app/src/keys/public.key
       REVIEW_EDIT_LIMIT_MINUTES: 30
+      COMMENT_EDIT_LIMIT_MINUTES: 30
+      MEDIA_GRPC_URL: media-service:50051
+      MAX_IMAGE_UPLOAD_BYTES: 5242880
     depends_on:
       postgres-reviews:
         condition: service_healthy
+      media-service:
+        condition: service_started
     networks:
       - FilmTrack-network
 
@@ -156,6 +166,8 @@ services:
     build: ./ms-friends
     ports:
       - "3006:3006"
+    volumes:
+      - ./ms-auth/src/keys/public.key:/app/src/keys/public.key:ro
     environment:
       PORT: 3006
       DATABASE_URL: postgresql://postgres:postgres@postgres-friends:5432/reeltrack_friends_db
@@ -163,6 +175,23 @@ services:
     depends_on:
       postgres-friends:
         condition: service_healthy
+    networks:
+      - FilmTrack-network
+
+  media-service:
+    build: ./ms-media
+    ports:
+      - "50051:50051"
+      - "3010:3010"
+    environment:
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 50051
+      HTTP_PORT: 3010
+      UPLOAD_DIR: /app/uploads
+      PUBLIC_BASE_URL: http://localhost:3010/media
+      MAX_FILE_SIZE_BYTES: 5242880
+    volumes:
+      - media_uploads:/app/uploads
     networks:
       - FilmTrack-network
 
@@ -174,3 +203,4 @@ volumes:
   postgres_users_library_data:
   postgres_reviews_data:
   postgres_friends_data:
+  media_uploads:

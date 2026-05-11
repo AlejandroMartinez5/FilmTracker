@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS reviews (
   rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
   title VARCHAR(150),
   content TEXT NOT NULL,
+  image_url TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (auth_id, tvmaze_id)
@@ -23,6 +24,7 @@ CREATE TABLE IF NOT EXISTS comments (
   review_id INTEGER NOT NULL REFERENCES reviews(id) ON DELETE CASCADE,
   auth_id VARCHAR(255) NOT NULL,
   content TEXT NOT NULL,
+  image_url TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

@@ -137,6 +137,20 @@ const deleteReview = async (reviewId) => {
   return result.rows[0];
 };
 
+const updateReviewImage = async ({ reviewId, imageUrl }) => {
+  const query = `
+    UPDATE reviews
+    SET
+      image_url = $1,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = $2
+    RETURNING *
+  `;
+
+  const result = await pool.query(query, [imageUrl, reviewId]);
+  return result.rows[0];
+};
+
 const likeReview = async ({ reviewId, authId }) => {
   const query = `
     INSERT INTO review_likes (review_id, auth_id)
@@ -181,6 +195,7 @@ module.exports = {
   countLikesReceivedByUser,
   updateReview,
   deleteReview,
+  updateReviewImage,
   likeReview,
   unlikeReview,
   countLikes

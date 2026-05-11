@@ -102,6 +102,26 @@ const deleteReview = async (req, res) => {
   }
 };
 
+const uploadReviewImage = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    const result = await reviewsService.uploadReviewImage(
+      reviewId,
+      req.file,
+      req.user
+    );
+
+    return res.status(200).json({
+      message: "Imagen de resena subida correctamente",
+      data: result
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error al subir la imagen de la resena"
+    });
+  }
+};
+
 const likeReview = async (req, res) => {
   try {
     const { reviewId } = req.params;
@@ -151,6 +171,7 @@ module.exports = {
   getUserReviewsSummary,
   updateReview,
   deleteReview,
+  uploadReviewImage,
   likeReview,
   unlikeReview,
   getReviewLikes

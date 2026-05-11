@@ -1,4 +1,5 @@
 const usersRepository = require("../repositories/users.repository");
+const mediaClient = require("../clients/media.client");
 
 const usernameRegex = /^[a-zA-Z0-9._]{3,30}$/;
 
@@ -227,6 +228,51 @@ const getPublicProfileByUsername = async (username) => {
   };
 };
 
+const uploadProfilePhoto = async (authId, file) => {
+  if (!file) {
+    const error = new Error("La imagen de perfil es obligatoria");
+    error.status = 400;
+    throw error;
+  }
+
+  const user = await usersRepository.findByAuthId(authId);
+
+  if (!user) {
+    const error = new Error("Usuario no encontrado");
+    error.status = 404;
+    throw error;
+  }
+
+  try {
+    const media = await mediaClient.uploadProfilePhoto({
+      authId,
+      file
+    });
+
+    const updatedUser = await usersRepository.updateUserById(user._id, {
+      profileImage: media.url
+    });
+
+    return {
+      id: updatedUser._id,
+      authId: updatedUser.authId,
+      name: updatedUser.name,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      profileImage: updatedUser.profileImage,
+      isEmailVerified: updatedUser.isEmailVerified,
+      role: updatedUser.role,
+      createdAt: updatedUser.createdAt,
+      updatedAt: updatedUser.updatedAt,
+      media
+    };
+  } catch (error) {
+    const customError = new Error(error.details || error.message);
+    customError.status = error.code === 3 ? 400 : 502;
+    throw customError;
+  }
+};
+
 const getPublicProfileByAuthId = async (authId) => {
   const normalizedAuthId = authId?.trim();
 
@@ -258,6 +304,7 @@ module.exports = {
   createInitialProfile,
   getProfile,
   updateProfile,
+  uploadProfilePhoto,
   checkUsernameAvailability,
   searchUsers,
   getPublicProfileByUsername,

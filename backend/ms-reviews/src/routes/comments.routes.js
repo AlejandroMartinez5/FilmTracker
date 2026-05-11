@@ -4,6 +4,7 @@ const {
   authenticateToken,
   requireVerifiedEmail
 } = require("../middlewares/auth.middleware");
+const { uploadImage } = require("../middlewares/upload.middleware");
 
 const router = express.Router();
 
@@ -29,6 +30,13 @@ router.delete(
   "/comments/:commentId",
   authenticateToken,
   commentsController.deleteComment
+);
+
+router.post(
+  "/comments/:commentId/image",
+  authenticateToken,
+  uploadImage,
+  commentsController.uploadCommentImage
 );
 
 router.post(

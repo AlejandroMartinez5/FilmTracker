@@ -79,6 +79,26 @@ const deleteComment = async (req, res) => {
   }
 };
 
+const uploadCommentImage = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    const result = await commentsService.uploadCommentImage(
+      commentId,
+      req.file,
+      req.user
+    );
+
+    return res.status(200).json({
+      message: "Imagen de comentario subida correctamente",
+      data: result
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error al subir la imagen del comentario"
+    });
+  }
+};
+
 const likeComment = async (req, res) => {
   try {
     const { commentId } = req.params;
@@ -132,6 +152,7 @@ module.exports = {
   getCommentsByReview,
   updateComment,
   deleteComment,
+  uploadCommentImage,
   likeComment,
   unlikeComment,
   getCommentLikes

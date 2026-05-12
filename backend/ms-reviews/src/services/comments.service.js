@@ -39,7 +39,34 @@ const canEditComment = (comment, user) => {
   return diffMinutes <= COMMENT_EDIT_LIMIT_MINUTES;
 };
 
-const createComment = async (reviewId, { content }, user) => {
+const uploadCommentImageToMedia = async ({
+  commentId,
+  reviewId,
+  file,
+  authId
+}) => {
+  const media = await mediaClient.uploadCommentImage({
+    commentId: Number(commentId),
+    reviewId: Number(reviewId),
+    authId,
+    file
+  });
+
+  const updatedComment = await commentsRepository.updateCommentImage({
+    commentId: Number(commentId),
+    imageUrl: media.url
+  });
+
+  return {
+    commentId: Number(commentId),
+    reviewId: Number(reviewId),
+    imageUrl: media.url,
+    comment: updatedComment,
+    media
+  };
+};
+
+const createComment = async (reviewId, { content }, user, file = null) => {
   validateId(reviewId, "El reviewId debe ser válido");
   validateCommentContent(content);
 
@@ -57,7 +84,29 @@ const createComment = async (reviewId, { content }, user) => {
     content: content.trim()
   });
 
-  return comment;
+  if (!file) {
+    return comment;
+  }
+
+  try {
+    const result = await uploadCommentImageToMedia({
+      commentId: comment.id,
+      reviewId,
+      file,
+      authId: user.authId
+    });
+
+    return result.comment;
+  } catch (error) {
+    await Promise.allSettled([
+      mediaClient.deleteCommentImage(Number(comment.id)),
+      commentsRepository.deleteComment(Number(comment.id))
+    ]);
+
+    const customError = new Error(error.details || error.message);
+    customError.status = error.code === 3 ? 400 : 502;
+    throw customError;
+  }
 };
 
 const getCommentsByReview = async (reviewId, paginationQuery, user = null) => {
@@ -186,24 +235,12 @@ const uploadCommentImage = async (commentId, file, user) => {
   }
 
   try {
-    const media = await mediaClient.uploadCommentImage({
-      commentId: Number(commentId),
-      reviewId: Number(comment.review_id),
+    return await uploadCommentImageToMedia({
+      commentId,
+      reviewId: comment.review_id,
       authId: user.authId,
       file
     });
-    const updatedComment = await commentsRepository.updateCommentImage({
-      commentId: Number(commentId),
-      imageUrl: media.url
-    });
-
-    return {
-      commentId: Number(commentId),
-      reviewId: Number(comment.review_id),
-      imageUrl: media.url,
-      comment: updatedComment,
-      media
-    };
   } catch (error) {
     const customError = new Error(error.details || error.message);
     customError.status = error.code === 3 ? 400 : 502;

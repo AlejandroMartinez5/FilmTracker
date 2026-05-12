@@ -13,6 +13,7 @@ router.post(
   "/reviews/:reviewId/comments",
   authenticateToken,
   requireVerifiedEmail,
+  uploadImage,
   commentsController.createComment
 );
 

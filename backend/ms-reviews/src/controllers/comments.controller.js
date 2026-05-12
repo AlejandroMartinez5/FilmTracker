@@ -7,7 +7,8 @@ const createComment = async (req, res) => {
     const comment = await commentsService.createComment(
       reviewId,
       req.body,
-      req.user
+      req.user,
+      req.file
     );
 
     return res.status(201).json({

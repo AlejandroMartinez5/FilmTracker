@@ -13,6 +13,7 @@ router.post(
   "/",
   authenticateToken,
   requireVerifiedEmail,
+  uploadImage,
   reviewsController.createReview
 );
 

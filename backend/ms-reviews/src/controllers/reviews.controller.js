@@ -2,7 +2,11 @@ const reviewsService = require("../services/reviews.service");
 
 const createReview = async (req, res) => {
   try {
-    const review = await reviewsService.createReview(req.body, req.user);
+    const review = await reviewsService.createReview(
+      req.body,
+      req.user,
+      req.file
+    );
 
     return res.status(201).json({
       message: "Reseña creada correctamente",

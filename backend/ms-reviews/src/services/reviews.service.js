@@ -45,7 +45,31 @@ const canEditReview = (review, user) => {
   return diffMinutes <= REVIEW_EDIT_LIMIT_MINUTES;
 };
 
-const createReview = async ({ tvmazeId, rating, title, content }, user) => {
+const uploadReviewImageToMedia = async ({ reviewId, file, authId }) => {
+  const media = await mediaClient.uploadReviewImage({
+    reviewId: Number(reviewId),
+    authId,
+    file
+  });
+
+  const updatedReview = await reviewsRepository.updateReviewImage({
+    reviewId: Number(reviewId),
+    imageUrl: media.url
+  });
+
+  return {
+    reviewId: Number(reviewId),
+    imageUrl: media.url,
+    review: updatedReview,
+    media
+  };
+};
+
+const createReview = async (
+  { tvmazeId, rating, title, content },
+  user,
+  file = null
+) => {
   validateReviewData({ tvmazeId, rating, content });
 
   try {
@@ -57,7 +81,28 @@ const createReview = async ({ tvmazeId, rating, title, content }, user) => {
       content: content.trim()
     });
 
-    return review;
+    if (!file) {
+      return review;
+    }
+
+    try {
+      const result = await uploadReviewImageToMedia({
+        reviewId: review.id,
+        file,
+        authId: user.authId
+      });
+
+      return result.review;
+    } catch (error) {
+      await Promise.allSettled([
+        mediaClient.deleteReviewImage(Number(review.id)),
+        reviewsRepository.deleteReview(Number(review.id))
+      ]);
+
+      const customError = new Error(error.details || error.message);
+      customError.status = error.code === 3 ? 400 : 502;
+      throw customError;
+    }
   } catch (error) {
     if (error.code === "23505") {
       const customError = new Error("Ya tienes una reseña para esta serie");
@@ -261,22 +306,11 @@ const uploadReviewImage = async (reviewId, file, user) => {
   }
 
   try {
-    const media = await mediaClient.uploadReviewImage({
-      reviewId: Number(reviewId),
-      authId: user.authId,
-      file
+    return await uploadReviewImageToMedia({
+      reviewId,
+      file,
+      authId: user.authId
     });
-    const updatedReview = await reviewsRepository.updateReviewImage({
-      reviewId: Number(reviewId),
-      imageUrl: media.url
-    });
-
-    return {
-      reviewId: Number(reviewId),
-      imageUrl: media.url,
-      review: updatedReview,
-      media
-    };
   } catch (error) {
     const customError = new Error(error.details || error.message);
     customError.status = error.code === 3 ? 400 : 502;

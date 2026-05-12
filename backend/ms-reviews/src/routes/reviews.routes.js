@@ -3,6 +3,7 @@ const reviewsController = require("../controllers/reviews.controller");
 const {
   authenticateToken,
   optionalAuthenticateToken,
+  requireAdmin,
   requireVerifiedEmail
 } = require("../middlewares/auth.middleware");
 const { uploadImage } = require("../middlewares/upload.middleware");
@@ -25,6 +26,13 @@ router.get(
 
 router.get("/user/:authId/summary", reviewsController.getUserReviewsSummary);
 router.get("/user/:authId", reviewsController.getReviewsByUser);
+
+router.get(
+  "/admin/stats",
+  authenticateToken,
+  requireAdmin,
+  reviewsController.getAdminStats
+);
 
 router.get("/:reviewId/likes", reviewsController.getReviewLikes);
 router.get("/:reviewId", reviewsController.getReviewById);

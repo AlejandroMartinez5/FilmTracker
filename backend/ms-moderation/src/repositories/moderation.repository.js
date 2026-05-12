@@ -235,6 +235,62 @@ const completePendingReportWithAction = async ({
   }
 };
 
+const getAdminStats = async () => {
+  const [
+    statusResult,
+    targetTypeResult,
+    reasonResult,
+    actionTypeResult
+  ] = await Promise.all([
+    pool.query(`
+      SELECT status, COUNT(*)::int AS count
+      FROM reports
+      GROUP BY status
+    `),
+    pool.query(`
+      SELECT target_type, COUNT(*)::int AS count
+      FROM reports
+      GROUP BY target_type
+      ORDER BY count DESC
+    `),
+    pool.query(`
+      SELECT reason, COUNT(*)::int AS count
+      FROM reports
+      GROUP BY reason
+      ORDER BY count DESC, reason ASC
+    `),
+    pool.query(`
+      SELECT action_type, COUNT(*)::int AS count
+      FROM moderation_actions
+      GROUP BY action_type
+      ORDER BY count DESC, action_type ASC
+    `)
+  ]);
+
+  const byStatus = statusResult.rows.reduce(
+    (acc, row) => ({ ...acc, [row.status]: row.count }),
+    { PENDING: 0, DISMISSED: 0, ACTION_TAKEN: 0 }
+  );
+
+  const totalReports =
+    byStatus.PENDING + byStatus.DISMISSED + byStatus.ACTION_TAKEN;
+
+  return {
+    totalReports,
+    pendingReports: byStatus.PENDING,
+    resolvedReports: byStatus.DISMISSED + byStatus.ACTION_TAKEN,
+    dismissedReports: byStatus.DISMISSED,
+    actionTakenReports: byStatus.ACTION_TAKEN,
+    reportsByStatus: byStatus,
+    reportsByTargetType: targetTypeResult.rows.reduce(
+      (acc, row) => ({ ...acc, [row.target_type]: row.count }),
+      { USER: 0, REVIEW: 0, COMMENT: 0 }
+    ),
+    reportsByReason: reasonResult.rows,
+    actionsTaken: actionTypeResult.rows
+  };
+};
+
 module.exports = {
   createReport,
   findReportById,
@@ -242,5 +298,6 @@ module.exports = {
   findReports,
   updateReportReview,
   createModerationAction,
-  completePendingReportWithAction
+  completePendingReportWithAction,
+  getAdminStats
 };

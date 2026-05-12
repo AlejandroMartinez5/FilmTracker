@@ -64,6 +64,21 @@ const getAdminReportById = async (req, res) => {
   }
 };
 
+const getAdminStats = async (req, res) => {
+  try {
+    const result = await moderationService.getAdminStats();
+
+    return res.status(200).json({
+      message: "Estadisticas de moderacion obtenidas correctamente",
+      data: result
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error interno del servidor"
+    });
+  }
+};
+
 const dismissReport = async (req, res) => {
   try {
     const result = await moderationService.dismissReport(
@@ -114,6 +129,7 @@ module.exports = {
   getMyReports,
   getAdminReports,
   getAdminReportById,
+  getAdminStats,
   dismissReport,
   executeAction
 };

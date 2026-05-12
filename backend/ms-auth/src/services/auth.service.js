@@ -521,6 +521,10 @@ const getAccountStatus = async (authId) => {
   return buildAccountStatusResponse(user);
 };
 
+const getAdminStats = async () => {
+  return repository.getAdminStats();
+};
+
 const suspendUser = async ({ authId, suspendedUntil, reason, adminAuthId }) => {
   if (!authId) {
     throwBadRequest("authId es obligatorio");
@@ -603,6 +607,7 @@ module.exports = {
   changePassword,
   updateUsername,
   getAccountStatus,
+  getAdminStats,
   suspendUser,
   banUser,
   unbanUser

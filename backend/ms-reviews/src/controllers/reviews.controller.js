@@ -200,6 +200,21 @@ const getReviewLikes = async (req, res) => {
   }
 };
 
+const getAdminStats = async (req, res) => {
+  try {
+    const result = await reviewsService.getAdminStats(req.query);
+
+    return res.status(200).json({
+      message: "Estadisticas de resenas obtenidas correctamente",
+      data: result
+    });
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message: error.message || "Error al obtener estadisticas de resenas"
+    });
+  }
+};
+
 module.exports = {
   createReview,
   getReviewsByShow,
@@ -212,5 +227,6 @@ module.exports = {
   removeReviewImage,
   likeReview,
   unlikeReview,
-  getReviewLikes
+  getReviewLikes,
+  getAdminStats
 };

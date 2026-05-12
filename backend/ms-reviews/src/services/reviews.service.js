@@ -435,6 +435,10 @@ const getReviewLikes = async (reviewId) => {
   };
 };
 
+const getAdminStats = async ({ days, limit } = {}) => {
+  return reviewsRepository.getAdminStats({ days, limit });
+};
+
 module.exports = {
   createReview,
   getReviewsByShow,
@@ -447,5 +451,6 @@ module.exports = {
   removeReviewImage,
   likeReview,
   unlikeReview,
-  getReviewLikes
+  getReviewLikes,
+  getAdminStats
 };

@@ -18,6 +18,11 @@ router.get(
   moderationController.getAdminReports
 );
 router.get(
+  "/admin/stats",
+  requireAdmin,
+  moderationController.getAdminStats
+);
+router.get(
   "/admin/reports/:reportId",
   requireAdmin,
   moderationController.getAdminReportById

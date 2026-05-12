@@ -15,6 +15,12 @@ router.post("/reset-password", controller.resetPassword);
 router.put("/change-password", authMiddleware, controller.changePassword);
 router.put("/username", authMiddleware, controller.updateUsername);
 router.get(
+  "/admin/stats",
+  authMiddleware,
+  requireAdmin,
+  controller.getAdminStats
+);
+router.get(
   "/admin/users/:authId/status",
   authMiddleware,
   requireAdmin,

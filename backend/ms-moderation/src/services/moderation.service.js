@@ -298,6 +298,10 @@ const getAdminReportById = async (reportId) => {
   return enrichReport(report);
 };
 
+const getAdminStats = async () => {
+  return moderationRepository.getAdminStats();
+};
+
 const dismissReport = async ({ reportId, note }, admin) => {
   const report = await getReportOrThrow(reportId);
 
@@ -456,6 +460,7 @@ module.exports = {
   getMyReports,
   getAdminReports,
   getAdminReportById,
+  getAdminStats,
   dismissReport,
   executeAction
 };

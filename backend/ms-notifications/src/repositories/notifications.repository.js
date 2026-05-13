@@ -148,6 +148,17 @@ const remove = async (notificationId, authId) => {
   return result.rows[0] || null;
 };
 
+const deleteOlderThanDays = async (days) => {
+  const query = `
+    DELETE FROM notifications
+    WHERE created_at < NOW() - ($1::int * INTERVAL '1 day')
+    RETURNING id
+  `;
+
+  const result = await pool.query(query, [days]);
+  return result.rowCount;
+};
+
 module.exports = {
   create,
   countByRecipient,
@@ -156,5 +167,6 @@ module.exports = {
   findByIdForRecipient,
   markAsRead,
   markAllAsRead,
-  remove
+  remove,
+  deleteOlderThanDays
 };

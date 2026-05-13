@@ -278,6 +278,8 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@postgres-notifications:5432/reeltrack_notifications_db
       JWT_PUBLIC_KEY_PATH: /app/src/keys/public.key
       RABBITMQ_URL: amqp://rabbitmq:5672
+      NOTIFICATIONS_RETENTION_DAYS: 30
+      NOTIFICATIONS_CLEANUP_INTERVAL_HOURS: 24
     depends_on:
       postgres-notifications:
         condition: service_healthy

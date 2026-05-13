@@ -153,6 +153,7 @@ services:
       JWT_PUBLIC_KEY_PATH: /app/src/keys/public.key
       MEDIA_GRPC_URL: media-service:50051
       MAX_IMAGE_UPLOAD_BYTES: 5242880
+      RABBITMQ_URL: amqp://rabbitmq:5672
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -185,8 +186,11 @@ services:
       - ./ms-users-library/.env
     environment:
       JWT_PUBLIC_KEY_PATH: /app/src/keys/public.key
+      RABBITMQ_URL: amqp://rabbitmq:5672
     depends_on:
       postgres-users-library:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - FilmTrack-network
@@ -205,8 +209,11 @@ services:
       COMMENT_EDIT_LIMIT_MINUTES: 30
       MEDIA_GRPC_URL: media-service:50051
       MAX_IMAGE_UPLOAD_BYTES: 5242880
+      RABBITMQ_URL: amqp://rabbitmq:5672
     depends_on:
       postgres-reviews:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
       media-service:
         condition: service_started
@@ -223,8 +230,11 @@ services:
       PORT: 3006
       DATABASE_URL: postgresql://postgres:postgres@postgres-friends:5432/reeltrack_friends_db
       JWT_PUBLIC_KEY_PATH: /app/src/keys/public.key
+      RABBITMQ_URL: amqp://rabbitmq:5672
     depends_on:
       postgres-friends:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - FilmTrack-network
@@ -242,8 +252,11 @@ services:
       AUTH_SERVICE_URL: http://auth-service:3003/api/auth
       REVIEWS_SERVICE_URL: http://reviews-service:3005/api
       USERS_SERVICE_URL: http://user-service:3002/api/users
+      RABBITMQ_URL: amqp://rabbitmq:5672
     depends_on:
       postgres-moderation:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
       auth-service:
         condition: service_started

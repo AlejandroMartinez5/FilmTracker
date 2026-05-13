@@ -1,5 +1,10 @@
 const usersRepository = require("../repositories/users.repository");
 const mediaClient = require("../clients/media.client");
+const {
+  publishProfilePhotoRemoved,
+  publishProfilePhotoUpdated,
+  publishProfileUpdated
+} = require("../utils/notification-events.util");
 
 const usernameRegex = /^[a-zA-Z0-9._]{3,30}$/;
 
@@ -159,6 +164,10 @@ const updateProfile = async (authId, { name, username, profileImage }) => {
   }
 
   const updatedUser = await usersRepository.updateUserById(user._id, updateData);
+
+  await publishProfileUpdated({
+    authId
+  });
 
   return {
     id: updatedUser._id,
@@ -345,6 +354,10 @@ const uploadProfilePhoto = async (authId, file) => {
       profileImage: media.url
     });
 
+    await publishProfilePhotoUpdated({
+      authId
+    });
+
     return {
       id: updatedUser._id,
       authId: updatedUser.authId,
@@ -398,6 +411,11 @@ const removeProfilePhoto = async (authId, user) => {
   await Promise.allSettled([
     mediaClient.deleteProfilePhoto(normalizedAuthId)
   ]);
+
+  await publishProfilePhotoRemoved({
+    authId: normalizedAuthId,
+    actorAuthId: user.authId
+  });
 
   return {
     id: updatedUser._id,

@@ -1,6 +1,7 @@
 const reviewsRepository = require("../repositories/reviews.repository");
 const commentsRepository = require("../repositories/comments.repository");
 const mediaClient = require("../clients/media.client");
+const { publishReviewLiked } = require("../utils/notification-events.util");
 const {
   getPaginationParams,
   buildPaginationMeta
@@ -383,6 +384,11 @@ const likeReview = async (reviewId, user) => {
       message: "Ya habías dado like a esta reseña"
     };
   }
+
+  await publishReviewLiked({
+    review,
+    actorAuthId: user.authId
+  });
 
   return {
     message: "Like agregado correctamente"

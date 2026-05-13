@@ -3,6 +3,8 @@ const crypto = require("crypto");
 const repository = require("../repositories/auth.repository");
 const { signToken } = require("../utils/jwt.util");
 const {
+  publishPasswordChanged,
+  publishPasswordReset,
   publishUserCreated,
   publishUserEmailVerified,
   publishUsernameUpdated
@@ -456,6 +458,9 @@ const resetPassword = async ({ token, password }) => {
   user.passwordResetToken = null;
   user.passwordResetExpires = null;
   await user.save();
+  await publishPasswordReset({
+    authId: user._id.toString()
+  });
 
   return {
     id: user._id,
@@ -498,6 +503,9 @@ const changePassword = async ({ authId, currentPassword, newPassword }) => {
   user.passwordResetToken = null;
   user.passwordResetExpires = null;
   await user.save();
+  await publishPasswordChanged({
+    authId: user._id.toString()
+  });
 
   return {
     id: user._id,

@@ -1,5 +1,10 @@
 const friendsRepository = require("../repositories/friends.repository");
 const {
+  publishFriendRequestAccepted,
+  publishFriendRequestReceived,
+  publishFriendRequestRejected
+} = require("../utils/notification-events.util");
+const {
   getPaginationParams,
   buildPaginationMeta
 } = require("../utils/pagination.util");
@@ -68,10 +73,14 @@ const sendFriendRequest = async (authId, receiverAuthId) => {
   }
 
   try {
-    return await friendsRepository.createRequest({
+    const request = await friendsRepository.createRequest({
       requesterAuthId: requester,
       receiverAuthId: receiver
     });
+
+    await publishFriendRequestReceived(request);
+
+    return request;
   } catch (error) {
     if (error.code === "23505") {
       throwError("Ya existe una relacion activa entre estos usuarios", 409);
@@ -98,10 +107,14 @@ const acceptFriendRequest = async (authId, requestId) => {
     throwError("Solo se pueden aceptar solicitudes pendientes", 409);
   }
 
-  return await friendsRepository.updateStatus({
+  const updatedRequest = await friendsRepository.updateStatus({
     requestId: parsedRequestId,
     status: "ACCEPTED"
   });
+
+  await publishFriendRequestAccepted(updatedRequest);
+
+  return updatedRequest;
 };
 
 const rejectFriendRequest = async (authId, requestId) => {
@@ -121,10 +134,14 @@ const rejectFriendRequest = async (authId, requestId) => {
     throwError("Solo se pueden rechazar solicitudes pendientes", 409);
   }
 
-  return await friendsRepository.updateStatus({
+  const updatedRequest = await friendsRepository.updateStatus({
     requestId: parsedRequestId,
     status: "REJECTED"
   });
+
+  await publishFriendRequestRejected(updatedRequest);
+
+  return updatedRequest;
 };
 
 const cancelFriendRequest = async (authId, requestId) => {

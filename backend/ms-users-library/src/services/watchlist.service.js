@@ -1,4 +1,5 @@
 const watchlistRepository = require("../repositories/watchlist.repository");
+const { publishWatchlistAdded } = require("../utils/notification-events.util");
 const {
   getPaginationParams,
   buildPaginationMeta
@@ -11,7 +12,14 @@ const addToWatchlist = async (authId, tvmazeId) => {
     throw new Error("La serie ya está en tu watchlist");
   }
 
-  return await watchlistRepository.add(authId, tvmazeId);
+  const item = await watchlistRepository.add(authId, tvmazeId);
+
+  await publishWatchlistAdded({
+    authId,
+    tvmazeId
+  });
+
+  return item;
 };
 
 const getWatchlist = async (authId, paginationQuery) => {

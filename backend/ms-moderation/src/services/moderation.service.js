@@ -3,6 +3,11 @@ const authClient = require("../clients/auth.client");
 const reviewsClient = require("../clients/reviews.client");
 const usersClient = require("../clients/users.client");
 const {
+  publishModerationActionToTarget,
+  publishReportActionTaken,
+  publishReportDismissed
+} = require("../utils/notification-events.util");
+const {
   getPaginationParams,
   buildPaginationMeta
 } = require("../utils/pagination.util");
@@ -309,7 +314,7 @@ const dismissReport = async ({ reportId, note }, admin) => {
     throwBadRequest("Solo se pueden descartar reportes pendientes");
   }
 
-  return moderationRepository.completePendingReportWithAction({
+  const result = await moderationRepository.completePendingReportWithAction({
     reportId: report.id,
     status: "DISMISSED",
     reviewedByAuthId: admin.authId,
@@ -320,6 +325,10 @@ const dismissReport = async ({ reportId, note }, admin) => {
     note: note?.trim() || null,
     metadata: {}
   });
+
+  await publishReportDismissed(result);
+
+  return result;
 };
 
 const executeAction = async ({ reportId, actionType, note, duration }, admin, token) => {
@@ -439,7 +448,7 @@ const executeAction = async ({ reportId, actionType, note, duration }, admin, to
     });
   }
 
-  return moderationRepository.completePendingReportWithAction({
+  const result = await moderationRepository.completePendingReportWithAction({
     reportId: report.id,
     status: "ACTION_TAKEN",
     reviewedByAuthId: admin.authId,
@@ -453,6 +462,11 @@ const executeAction = async ({ reportId, actionType, note, duration }, admin, to
       suspendedUntil: suspendedUntil || null
     }
   });
+
+  await publishReportActionTaken(result);
+  await publishModerationActionToTarget(result);
+
+  return result;
 };
 
 module.exports = {

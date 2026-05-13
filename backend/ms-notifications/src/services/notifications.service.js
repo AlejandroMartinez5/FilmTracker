@@ -174,6 +174,70 @@ const createWelcomeNotification = async ({ authId, username }) => {
   });
 };
 
+const createEmailVerifiedNotification = async ({ authId, emailVerified }) => {
+  if (!emailVerified) {
+    return null;
+  }
+
+  const recipientAuthId = validateAuthId(authId, "authId");
+
+  return createNotification({
+    recipientAuthId,
+    type: "user.email_verified",
+    title: "Correo verificado",
+    body: "Tu correo fue verificado correctamente.",
+    metadata: {
+      source: "user.email_verified"
+    }
+  });
+};
+
+const createUsernameUpdatedNotification = async ({ authId, username }) => {
+  const recipientAuthId = validateAuthId(authId, "authId");
+  const normalizedUsername = username?.trim();
+
+  return createNotification({
+    recipientAuthId,
+    type: "user.username_updated",
+    title: "Username actualizado",
+    body: normalizedUsername
+      ? `Tu username ahora es ${normalizedUsername}.`
+      : "Tu username fue actualizado correctamente.",
+    metadata: {
+      source: "user.username_updated",
+      username: normalizedUsername || null
+    }
+  });
+};
+
+const createPasswordChangedNotification = async ({ authId }) => {
+  const recipientAuthId = validateAuthId(authId, "authId");
+
+  return createNotification({
+    recipientAuthId,
+    type: "user.password_changed",
+    title: "Contrasena actualizada",
+    body: "Tu contrasena fue actualizada correctamente.",
+    metadata: {
+      source: "user.password_changed"
+    }
+  });
+};
+
+const createPasswordResetNotification = async ({ authId }) => {
+  const recipientAuthId = validateAuthId(authId, "authId");
+
+  return createNotification({
+    recipientAuthId,
+    type: "user.password_reset",
+    title: "Contrasena restablecida",
+    body: "Tu contrasena fue restablecida correctamente.",
+    metadata: {
+      source: "user.password_reset"
+    }
+  });
+};
+
 module.exports = {
   createNotification,
   getNotifications,
@@ -181,5 +245,9 @@ module.exports = {
   markAsRead,
   markAllAsRead,
   deleteNotification,
-  createWelcomeNotification
+  createWelcomeNotification,
+  createEmailVerifiedNotification,
+  createUsernameUpdatedNotification,
+  createPasswordChangedNotification,
+  createPasswordResetNotification
 };

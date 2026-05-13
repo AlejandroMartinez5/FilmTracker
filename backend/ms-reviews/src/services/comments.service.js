@@ -2,6 +2,10 @@ const commentsRepository = require("../repositories/comments.repository");
 const reviewsRepository = require("../repositories/reviews.repository");
 const mediaClient = require("../clients/media.client");
 const {
+  publishCommentLiked,
+  publishReviewCommented
+} = require("../utils/notification-events.util");
+const {
   getPaginationParams,
   buildPaginationMeta
 } = require("../utils/pagination.util");
@@ -85,6 +89,7 @@ const createComment = async (reviewId, { content }, user, file = null) => {
   });
 
   if (!file) {
+    await publishReviewCommented({ review, comment });
     return comment;
   }
 
@@ -95,6 +100,8 @@ const createComment = async (reviewId, { content }, user, file = null) => {
       file,
       authId: user.authId
     });
+
+    await publishReviewCommented({ review, comment: result.comment });
 
     return result.comment;
   } catch (error) {
@@ -306,6 +313,11 @@ const likeComment = async (commentId, user) => {
       message: "Ya habías dado like a este comentario"
     };
   }
+
+  await publishCommentLiked({
+    comment,
+    actorAuthId: user.authId
+  });
 
   return {
     message: "Like agregado correctamente"

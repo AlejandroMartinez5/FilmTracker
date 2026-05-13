@@ -5,7 +5,9 @@ const EXCHANGE_TYPE = "fanout";
 const USER_EVENTS = {
   CREATED: "user.created",
   EMAIL_VERIFIED: "user.email_verified",
-  USERNAME_UPDATED: "user.username_updated"
+  USERNAME_UPDATED: "user.username_updated",
+  PASSWORD_CHANGED: "user.password_changed",
+  PASSWORD_RESET: "user.password_reset"
 };
 
 let connection = null;
@@ -82,10 +84,24 @@ const publishUsernameUpdated = async ({ authId, username }) => {
   });
 };
 
+const publishPasswordChanged = async ({ authId }) => {
+  return publishUserEvent(USER_EVENTS.PASSWORD_CHANGED, {
+    authId
+  });
+};
+
+const publishPasswordReset = async ({ authId }) => {
+  return publishUserEvent(USER_EVENTS.PASSWORD_RESET, {
+    authId
+  });
+};
+
 module.exports = {
   connectBroker,
   publishUserCreated,
   publishUserEmailVerified,
   publishUsernameUpdated,
+  publishPasswordChanged,
+  publishPasswordReset,
   USER_EVENTS
 };

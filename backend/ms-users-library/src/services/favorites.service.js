@@ -1,4 +1,5 @@
 const favoritesRepository = require("../repositories/favorites.repository");
+const { publishFavoriteAdded } = require("../utils/notification-events.util");
 const {
   getPaginationParams,
   buildPaginationMeta
@@ -25,7 +26,14 @@ const addFavorite = async (authId, tvmazeId) => {
     throw error;
   }
 
-  return favoritesRepository.createFavorite(authId, tvmazeId);
+  const favorite = await favoritesRepository.createFavorite(authId, tvmazeId);
+
+  await publishFavoriteAdded({
+    authId,
+    tvmazeId
+  });
+
+  return favorite;
 };
 
 const getFavorites = async (authId, paginationQuery) => {

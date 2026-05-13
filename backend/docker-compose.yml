@@ -91,6 +91,27 @@ services:
     networks:
       - FilmTrack-network
 
+  postgres-notifications:
+    image: postgres:16
+    container_name: postgres-notifications
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: reeltrack_notifications_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_notifications_data:/var/lib/postgresql/data
+      - ./ms-notifications/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d reeltrack_notifications_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 90s
+    networks:
+      - FilmTrack-network
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -233,6 +254,25 @@ services:
     networks:
       - FilmTrack-network
 
+  notifications-service:
+    build: ./ms-notifications
+    ports:
+      - "3008:3008"
+    volumes:
+      - ./ms-auth/src/keys/public.key:/app/src/keys/public.key:ro
+    environment:
+      PORT: 3008
+      DATABASE_URL: postgresql://postgres:postgres@postgres-notifications:5432/reeltrack_notifications_db
+      JWT_PUBLIC_KEY_PATH: /app/src/keys/public.key
+      RABBITMQ_URL: amqp://rabbitmq:5672
+    depends_on:
+      postgres-notifications:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - FilmTrack-network
+
   media-service:
     build: ./ms-media
     ports:
@@ -259,4 +299,5 @@ volumes:
   postgres_reviews_data:
   postgres_friends_data:
   postgres_moderation_data:
+  postgres_notifications_data:
   media_uploads:

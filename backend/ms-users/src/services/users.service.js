@@ -71,7 +71,8 @@ const createInitialProfile = async ({
   role = "USER",
   name,
   username,
-  profileImage = null
+  profileImage = null,
+  emailVerified = false
 }) => {
   if (!authId || !email || !name || !username) {
     const error = new Error("authId, email, name y username son obligatorios");
@@ -107,7 +108,8 @@ const createInitialProfile = async ({
     role,
     name: normalizedName,
     username: normalizedUsername,
-    profileImage: normalizedProfileImage
+    profileImage: normalizedProfileImage,
+    isEmailVerified: emailVerified === true
   });
 
   return user;

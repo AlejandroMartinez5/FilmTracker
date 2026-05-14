@@ -166,8 +166,8 @@ const createWelcomeNotification = async ({ authId, username }) => {
   return createNotification({
     recipientAuthId,
     type: "user.welcome",
-    title: "Bienvenido a ReelTrack",
-    body: `Hola ${displayName}, tu cuenta esta lista para comenzar a guardar series y peliculas.`,
+    title: "Bienvenido a FilmTracker",
+    body: `Hola ${displayName}, tu cuenta esta lista para comenzar a guardar series.`,
     metadata: {
       source: "user.created"
     }

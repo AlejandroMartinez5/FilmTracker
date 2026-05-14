@@ -12,6 +12,7 @@ const {
 const { requestUsernameAvailability } = require("../utils/username-check.util");
 const {
   sendVerificationEmail,
+  sendWelcomeEmail,
   sendPasswordResetEmail
 } = require("../utils/email.util");
 
@@ -166,7 +167,6 @@ const register = async ({ email, password, name, username, profileImage }) => {
   }
 
   const hashed = await bcrypt.hash(password, 10);
-  const verification = buildVerificationData();
   let authUser;
 
   try {
@@ -175,9 +175,9 @@ const register = async ({ email, password, name, username, profileImage }) => {
       username: normalizedUsername,
       password: hashed,
       role: "USER",
-      emailVerified: false,
-      emailVerificationToken: verification.hashedCode,
-      emailVerificationExpires: verification.expires
+      emailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null
     });
 
     await publishUserCreated({
@@ -186,7 +186,8 @@ const register = async ({ email, password, name, username, profileImage }) => {
       role: authUser.role,
       name: normalizedName,
       username: authUser.username,
-      profileImage: profileImage || null
+      profileImage: profileImage || null,
+      emailVerified: authUser.emailVerified
     });
   } catch (error) {
     if (authUser) {
@@ -200,17 +201,17 @@ const register = async ({ email, password, name, username, profileImage }) => {
     throw error;
   }
 
-  let verificationEmailSent = false;
+  let welcomeEmailSent = false;
 
   try {
-    const mailResult = await sendVerificationEmail({
+    const mailResult = await sendWelcomeEmail({
       email: authUser.email,
-      code: verification.code
+      name: normalizedName
     });
 
-    verificationEmailSent = mailResult.sent;
+    welcomeEmailSent = mailResult.sent;
   } catch (error) {
-    console.error("Error al enviar correo de verificacion:", error.message);
+    console.error("Error al enviar correo de bienvenida:", error.message);
   }
 
   return {
@@ -220,7 +221,7 @@ const register = async ({ email, password, name, username, profileImage }) => {
     role: authUser.role,
     accountStatus: authUser.accountStatus,
     emailVerified: authUser.emailVerified,
-    verificationEmailSent
+    welcomeEmailSent
   };
 };
 

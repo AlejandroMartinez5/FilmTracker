@@ -42,12 +42,26 @@ const sendMail = async ({ to, subject, html }) => {
 const sendVerificationEmail = async ({ email, code }) => {
   return sendMail({
     to: email,
-    subject: "Verifica tu correo en ReelTrack",
+    subject: "Verifica tu correo en FilmTracker",
     html: `
       <h1>Verifica tu correo</h1>
-      <p>Introduce este codigo en ReelTrack para poder publicar resenas y comentarios.</p>
+      <p>Introduce este codigo en FilmTracker para poder publicar resenas y comentarios.</p>
       <h2 style="letter-spacing: 6px;">${code}</h2>
       <p>Este codigo expira en 15 minutos.</p>
+    `
+  });
+};
+
+const sendWelcomeEmail = async ({ email, name }) => {
+  const displayName = name?.trim() || "usuario";
+
+  return sendMail({
+    to: email,
+    subject: "Bienvenido a FilmTracker",
+    html: `
+      <h1>Bienvenido a FilmTracker, ${displayName}</h1>
+      <p>Tu cuenta ya esta lista para descubrir series, publicar resenas y seguir tu progreso.</p>
+      <p>Gracias por unirte a FilmTrack.</p>
     `
   });
 };
@@ -55,10 +69,10 @@ const sendVerificationEmail = async ({ email, code }) => {
 const sendPasswordResetEmail = async ({ email, code }) => {
   return sendMail({
     to: email,
-    subject: "Recupera tu contrasena de ReelTrack",
+    subject: "Recupera tu contrasena de FilmTracker",
     html: `
       <h1>Recuperar contrasena</h1>
-      <p>Introduce este codigo en ReelTrack para crear una nueva contrasena.</p>
+      <p>Introduce este codigo en FilmTracker para crear una nueva contrasena.</p>
       <h2 style="letter-spacing: 6px;">${code}</h2>
       <p>Este codigo expira en 15 minutos.</p>
     `
@@ -67,5 +81,6 @@ const sendPasswordResetEmail = async ({ email, code }) => {
 
 module.exports = {
   sendVerificationEmail,
+  sendWelcomeEmail,
   sendPasswordResetEmail
 };

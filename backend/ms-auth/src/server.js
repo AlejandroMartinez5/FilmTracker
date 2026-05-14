@@ -3,6 +3,7 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const app = require("./app");
 const { connectBroker } = require("./utils/broker.util");
+const { seedDefaultAdmin } = require("./seeders/admin.seeder");
 
 const PORT = process.env.PORT || 3003;
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -12,6 +13,7 @@ mongoose
   .then(async () => {
     console.log("MongoDB conectado correctamente en ms-auth");
 
+    await seedDefaultAdmin();
     await connectBroker();
 
     app.listen(PORT, () => {

@@ -133,6 +133,8 @@ services:
       - "3003:3003"
     env_file:
       - ./ms-auth/.env
+    environment:
+      RABBITMQ_URL: amqp://rabbitmq:5672
     depends_on:
       rabbitmq:
         condition: service_healthy

@@ -10,7 +10,8 @@ async function createShow(showData) {
 
 async function getFeatured(limit = 10) {
   return Show.find({
-    'image.medium': { $ne: null }
+    'image.medium': { $ne: null },
+    'rating.average': { $ne: null, $gt: 0 }
   })
     .sort({ tvmazeId: 1 })
     .limit(limit);
@@ -26,7 +27,8 @@ async function getTopRated(limit = 10) {
 
 async function getRecent(limit = 10) {
   return Show.find({
-    premiered: { $ne: null }
+    premiered: { $ne: null },
+    'rating.average': { $ne: null, $gt: 0 }
   })
     .sort({ premiered: -1 })
     .limit(limit);
@@ -35,8 +37,9 @@ async function getRecent(limit = 10) {
 async function getByStatus(status, limit = 10) {
   return Show.find({
     status,
-    averageRuntime: { $ne: null }
-})
+    averageRuntime: { $ne: null },
+    'rating.average': { $ne: null, $gt: 0 }
+  })
     .sort({ averageRuntime: 1 })
     .limit(limit);
 }

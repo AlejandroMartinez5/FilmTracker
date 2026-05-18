@@ -1,0 +1,35 @@
+openapi: 3.0.3
+info:
+  title: ReelTrack Users Library API
+  version: 1.0.0
+  description: Contrato OpenAPI del microservicio de favoritos y watchlist.
+servers:
+  - url: http://localhost:3004
+    description: Local ms-users-library
+tags:
+  - name: Favorites
+  - name: Watchlist
+paths:
+  /health:
+    get:
+      tags: [Favorites, Watchlist]
+      summary: Verifica el estado de ms-users-library.
+      responses:
+        "200":
+          $ref: "../../docs/openapi.yaml#/components/responses/MessageResponse"
+  /api/favorites:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1favorites"
+  /api/favorites/user/{authId}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1favorites~1user~1{authId}"
+  /api/favorites/{tvmazeId}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1favorites~1{tvmazeId}"
+  /api/watchlist:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1watchlist"
+  /api/watchlist/{tvmazeId}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1watchlist~1{tvmazeId}"
+  /api/watchlist/{tvmazeId}/check:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1watchlist~1{tvmazeId}~1check"
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: "../../docs/openapi.yaml#/components/securitySchemes/bearerAuth"

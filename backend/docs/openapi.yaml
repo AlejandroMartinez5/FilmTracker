@@ -1,0 +1,1985 @@
+openapi: 3.0.3
+info:
+  title: ReelTrack API
+  version: 1.0.0
+  description: Documentacion OpenAPI centralizada para los microservicios de ReelTrack.
+servers:
+  - url: http://localhost:3003
+    description: Auth service
+  - url: http://localhost:3002
+    description: Users service
+  - url: http://localhost:3001
+    description: Shows service
+  - url: http://localhost:3004
+    description: Users library service
+  - url: http://localhost:3005
+    description: Reviews service
+  - url: http://localhost:3006
+    description: Friends service
+  - url: http://localhost:3007
+    description: Moderation service
+  - url: http://localhost:3008
+    description: Notifications service
+  - url: http://localhost:3010
+    description: Media HTTP service
+tags:
+  - name: Auth
+  - name: Users
+  - name: Shows
+  - name: Favorites
+  - name: Watchlist
+  - name: Reviews
+  - name: Comments
+  - name: Leaderboards
+  - name: Friends
+  - name: Moderation
+  - name: Notifications
+  - name: Media
+paths:
+  /api/auth/health:
+    get:
+      tags: [Auth]
+      summary: Verifica el estado de ms-auth.
+      responses:
+        "200":
+          $ref: "#/components/responses/MessageResponse"
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Registra un usuario.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Usuario registrado.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/MessageEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/AuthUser"
+        "400":
+          $ref: "#/components/responses/ErrorResponse"
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Inicia sesion y devuelve un JWT.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login exitoso.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/MessageEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/LoginResponse"
+        "401":
+          $ref: "#/components/responses/ErrorResponse"
+  /api/auth/verify-email:
+    post:
+      tags: [Auth]
+      summary: Verifica el correo con codigo.
+      requestBody:
+        $ref: "#/components/requestBodies/EmailCodeBody"
+      responses:
+        "200":
+          description: Correo verificado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+        "400":
+          $ref: "#/components/responses/ErrorResponse"
+  /api/auth/resend-verification:
+    post:
+      tags: [Auth]
+      summary: Reenvia codigo de verificacion.
+      requestBody:
+        $ref: "#/components/requestBodies/EmailBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/MessageResponse"
+        "400":
+          $ref: "#/components/responses/ErrorResponse"
+  /api/auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Solicita recuperacion de contrasena.
+      requestBody:
+        $ref: "#/components/requestBodies/EmailBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/MessageResponse"
+  /api/auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Restablece contrasena con token o codigo.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                token:
+                  type: string
+                code:
+                  type: string
+                password:
+                  type: string
+                  minLength: 6
+      responses:
+        "200":
+          $ref: "#/components/responses/MessageResponse"
+        "400":
+          $ref: "#/components/responses/ErrorResponse"
+  /api/auth/change-password:
+    put:
+      tags: [Auth]
+      summary: Cambia la contrasena del usuario autenticado.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+                  minLength: 6
+      responses:
+        "200":
+          $ref: "#/components/responses/MessageResponse"
+        "401":
+          $ref: "#/components/responses/ErrorResponse"
+  /api/auth/username:
+    put:
+      tags: [Auth]
+      summary: Actualiza el username desde autenticacion.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username]
+              properties:
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 30
+      responses:
+        "200":
+          description: Username actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataEnvelope"
+  /api/auth/admin/stats:
+    get:
+      tags: [Auth]
+      summary: Obtiene estadisticas administrativas de cuentas.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+        "403":
+          $ref: "#/components/responses/ErrorResponse"
+  /api/auth/admin/users/{authId}/status:
+    get:
+      tags: [Auth]
+      summary: Obtiene estado de cuenta por authId.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AuthId"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/auth/admin/users/{authId}/suspend:
+    patch:
+      tags: [Auth]
+      summary: Suspende temporalmente una cuenta.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AuthId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [suspendedUntil]
+              properties:
+                suspendedUntil:
+                  type: string
+                  format: date-time
+                reason:
+                  type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/auth/admin/users/{authId}/ban:
+    patch:
+      tags: [Auth]
+      summary: Banea una cuenta.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AuthId"
+      requestBody:
+        $ref: "#/components/requestBodies/ReasonBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/auth/admin/users/{authId}/unban:
+    patch:
+      tags: [Auth]
+      summary: Reactiva una cuenta baneada o suspendida.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AuthId"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+
+  /api/users/health:
+    get:
+      tags: [Users]
+      summary: Verifica el estado de ms-users.
+      responses:
+        "200":
+          $ref: "#/components/responses/MessageResponse"
+  /api/users/search:
+    get:
+      tags: [Users]
+      summary: Busca usuarios publicos por nombre o username.
+      parameters:
+        - $ref: "#/components/parameters/SearchQuery"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/users/admin/search:
+    get:
+      tags: [Users]
+      summary: Busca usuarios con datos administrativos.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/SearchQuery"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/users/admin/users/{authId}:
+    get:
+      tags: [Users]
+      summary: Obtiene perfil administrativo por authId.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AuthId"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/users/profile:
+    get:
+      tags: [Users]
+      summary: Obtiene el perfil autenticado.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+    put:
+      tags: [Users]
+      summary: Actualiza nombre o imagen de perfil.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 40
+                profileImage:
+                  type: string
+                  format: uri
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/users/profile/photo:
+    post:
+      tags: [Users]
+      summary: Sube foto de perfil.
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/ImageUploadBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/users/admin/users/{authId}/profile-photo:
+    delete:
+      tags: [Users]
+      summary: Remueve la foto de perfil de un usuario.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AuthId"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/users/id/{authId}:
+    get:
+      tags: [Users]
+      summary: Obtiene perfil publico por authId.
+      parameters:
+        - $ref: "#/components/parameters/AuthId"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/users/{username}:
+    get:
+      tags: [Users]
+      summary: Obtiene perfil publico por username.
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+
+  /api/shows/search:
+    get:
+      tags: [Shows]
+      summary: Busca series en TVmaze.
+      parameters:
+        - $ref: "#/components/parameters/SearchQuery"
+      responses:
+        "200":
+          description: Resultados de busqueda.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ShowSearchResult"
+  /api/shows/home:
+    get:
+      tags: [Shows]
+      summary: Obtiene grupos de series para home.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Series destacadas, recientes, mejor calificadas y finalizadas.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  featured:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Show"
+                  topRated:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Show"
+                  recent:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Show"
+                  ended:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Show"
+  /api/shows/by-genre/{genre}:
+    get:
+      tags: [Shows]
+      summary: Lista series por genero.
+      parameters:
+        - name: genre
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Series por genero.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  genre:
+                    type: string
+                  results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Show"
+  /api/shows/{tvmazeId}:
+    get:
+      tags: [Shows]
+      summary: Obtiene una serie por tvmazeId.
+      parameters:
+        - $ref: "#/components/parameters/TvmazeId"
+      responses:
+        "200":
+          description: Serie encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Show"
+  /api/shows/{tvmazeId}/full:
+    get:
+      tags: [Shows]
+      summary: Obtiene detalle completo de una serie.
+      parameters:
+        - $ref: "#/components/parameters/TvmazeId"
+      responses:
+        "200":
+          description: Serie con temporadas y reparto.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  show:
+                    $ref: "#/components/schemas/Show"
+                  seasons:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Season"
+                  cast:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CastMember"
+  /api/shows/{tvmazeId}/seasons:
+    get:
+      tags: [Shows]
+      summary: Obtiene temporadas de una serie.
+      parameters:
+        - $ref: "#/components/parameters/TvmazeId"
+      responses:
+        "200":
+          description: Temporadas.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  seasons:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Season"
+  /api/shows/{tvmazeId}/seasons/{seasonNumber}:
+    get:
+      tags: [Shows]
+      summary: Obtiene una temporada por numero.
+      parameters:
+        - $ref: "#/components/parameters/TvmazeId"
+        - $ref: "#/components/parameters/SeasonNumber"
+      responses:
+        "200":
+          description: Temporada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Season"
+  /api/shows/{tvmazeId}/seasons/{seasonNumber}/episodes:
+    get:
+      tags: [Shows]
+      summary: Obtiene episodios de una temporada.
+      parameters:
+        - $ref: "#/components/parameters/TvmazeId"
+        - $ref: "#/components/parameters/SeasonNumber"
+      responses:
+        "200":
+          $ref: "#/components/responses/EpisodeListResponse"
+  /api/shows/{tvmazeId}/seasons/{seasonNumber}/episodes/{episodeNumber}:
+    get:
+      tags: [Shows]
+      summary: Obtiene un episodio por temporada y numero.
+      parameters:
+        - $ref: "#/components/parameters/TvmazeId"
+        - $ref: "#/components/parameters/SeasonNumber"
+        - name: episodeNumber
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Episodio.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Episode"
+  /api/shows/{tvmazeId}/episodes:
+    get:
+      tags: [Shows]
+      summary: Obtiene episodios de una serie.
+      parameters:
+        - $ref: "#/components/parameters/TvmazeId"
+      responses:
+        "200":
+          $ref: "#/components/responses/EpisodeListResponse"
+  /api/shows/{tvmazeId}/cast:
+    get:
+      tags: [Shows]
+      summary: Obtiene el reparto de una serie.
+      parameters:
+        - $ref: "#/components/parameters/TvmazeId"
+      responses:
+        "200":
+          description: Reparto.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tvmazeId:
+                    type: integer
+                  cast:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CastMember"
+
+  /api/favorites:
+    post:
+      tags: [Favorites]
+      summary: Agrega una serie a favoritos.
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/TvmazeBody"
+      responses:
+        "201":
+          $ref: "#/components/responses/DataResponse"
+    get:
+      tags: [Favorites]
+      summary: Lista favoritos del usuario autenticado.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          $ref: "#/components/responses/PaginatedDataResponse"
+  /api/favorites/user/{authId}:
+    get:
+      tags: [Favorites]
+      summary: Lista favoritos publicos de un usuario.
+      parameters:
+        - $ref: "#/components/parameters/AuthId"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          $ref: "#/components/responses/PaginatedDataResponse"
+  /api/favorites/{tvmazeId}:
+    delete:
+      tags: [Favorites]
+      summary: Elimina una serie de favoritos.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TvmazeId"
+      responses:
+        "200":
+          $ref: "#/components/responses/MessageResponse"
+
+  /api/watchlist:
+    post:
+      tags: [Watchlist]
+      summary: Agrega una serie a watchlist.
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/TvmazeBody"
+      responses:
+        "201":
+          $ref: "#/components/responses/DataResponse"
+    get:
+      tags: [Watchlist]
+      summary: Lista watchlist del usuario autenticado.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          $ref: "#/components/responses/PaginatedDataResponse"
+  /api/watchlist/{tvmazeId}:
+    delete:
+      tags: [Watchlist]
+      summary: Elimina una serie de watchlist.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TvmazeId"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/watchlist/{tvmazeId}/check:
+    get:
+      tags: [Watchlist]
+      summary: Verifica si una serie esta en watchlist.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TvmazeId"
+      responses:
+        "200":
+          description: Estado de existencia.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exists:
+                    type: boolean
+
+  /api/reviews:
+    post:
+      tags: [Reviews]
+      summary: Crea una resena para una serie.
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/ReviewCreateMultipart"
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewCreate"
+      responses:
+        "201":
+          description: Resena creada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewEnvelope"
+  /api/reviews/show/{tvmazeId}:
+    get:
+      tags: [Reviews]
+      summary: Lista resenas por serie.
+      parameters:
+        - $ref: "#/components/parameters/TvmazeId"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          $ref: "#/components/responses/ReviewsPageResponse"
+  /api/reviews/user/{authId}/summary:
+    get:
+      tags: [Reviews]
+      summary: Obtiene resumen de resenas de un usuario.
+      parameters:
+        - $ref: "#/components/parameters/AuthId"
+      responses:
+        "200":
+          $ref: "#/components/responses/GenericObjectResponse"
+  /api/reviews/user/{authId}:
+    get:
+      tags: [Reviews]
+      summary: Lista resenas de un usuario.
+      parameters:
+        - $ref: "#/components/parameters/AuthId"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          $ref: "#/components/responses/ReviewsPageResponse"
+  /api/reviews/admin/stats:
+    get:
+      tags: [Reviews]
+      summary: Obtiene estadisticas administrativas de resenas.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/reviews/{reviewId}:
+    get:
+      tags: [Reviews]
+      summary: Obtiene una resena por id.
+      parameters:
+        - $ref: "#/components/parameters/ReviewId"
+      responses:
+        "200":
+          $ref: "#/components/responses/ReviewObjectResponse"
+    put:
+      tags: [Reviews]
+      summary: Actualiza una resena.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ReviewId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewUpdate"
+      responses:
+        "200":
+          $ref: "#/components/responses/ReviewObjectResponse"
+    delete:
+      tags: [Reviews]
+      summary: Elimina una resena.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ReviewId"
+      responses:
+        "200":
+          $ref: "#/components/responses/MessageResponse"
+  /api/reviews/{reviewId}/image:
+    post:
+      tags: [Reviews]
+      summary: Sube imagen para una resena.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ReviewId"
+      requestBody:
+        $ref: "#/components/requestBodies/ImageUploadBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+    delete:
+      tags: [Reviews]
+      summary: Quita imagen de una resena.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ReviewId"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/reviews/{reviewId}/like:
+    post:
+      tags: [Reviews]
+      summary: Da like a una resena.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ReviewId"
+      responses:
+        "200":
+          $ref: "#/components/responses/MessageResponse"
+    delete:
+      tags: [Reviews]
+      summary: Quita like de una resena.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ReviewId"
+      responses:
+        "200":
+          $ref: "#/components/responses/MessageResponse"
+  /api/reviews/{reviewId}/likes:
+    get:
+      tags: [Reviews]
+      summary: Cuenta likes de una resena.
+      parameters:
+        - $ref: "#/components/parameters/ReviewId"
+      responses:
+        "200":
+          $ref: "#/components/responses/GenericObjectResponse"
+
+  /api/reviews/{reviewId}/comments:
+    post:
+      tags: [Comments]
+      summary: Crea comentario en una resena.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ReviewId"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/CommentCreateMultipart"
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentCreate"
+      responses:
+        "201":
+          $ref: "#/components/responses/CommentObjectResponse"
+    get:
+      tags: [Comments]
+      summary: Lista comentarios de una resena.
+      parameters:
+        - $ref: "#/components/parameters/ReviewId"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Comentarios paginados.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comments:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Comment"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+  /api/comments/{commentId}:
+    get:
+      tags: [Comments]
+      summary: Obtiene un comentario por id.
+      parameters:
+        - $ref: "#/components/parameters/CommentId"
+      responses:
+        "200":
+          $ref: "#/components/responses/CommentObjectResponse"
+    put:
+      tags: [Comments]
+      summary: Actualiza un comentario.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentCreate"
+      responses:
+        "200":
+          $ref: "#/components/responses/CommentObjectResponse"
+    delete:
+      tags: [Comments]
+      summary: Elimina un comentario.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommentId"
+      responses:
+        "200":
+          $ref: "#/components/responses/MessageResponse"
+  /api/comments/{commentId}/image:
+    post:
+      tags: [Comments]
+      summary: Sube imagen para comentario.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommentId"
+      requestBody:
+        $ref: "#/components/requestBodies/ImageUploadBody"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+    delete:
+      tags: [Comments]
+      summary: Quita imagen de comentario.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommentId"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/comments/{commentId}/like:
+    post:
+      tags: [Comments]
+      summary: Da like a un comentario.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommentId"
+      responses:
+        "200":
+          $ref: "#/components/responses/MessageResponse"
+    delete:
+      tags: [Comments]
+      summary: Quita like de un comentario.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CommentId"
+      responses:
+        "200":
+          $ref: "#/components/responses/MessageResponse"
+  /api/comments/{commentId}/likes:
+    get:
+      tags: [Comments]
+      summary: Cuenta likes de un comentario.
+      parameters:
+        - $ref: "#/components/parameters/CommentId"
+      responses:
+        "200":
+          $ref: "#/components/responses/GenericObjectResponse"
+  /api/leaderboards/users:
+    get:
+      tags: [Leaderboards]
+      summary: Ranking de usuarios.
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          $ref: "#/components/responses/GenericObjectResponse"
+  /api/leaderboards/reviews:
+    get:
+      tags: [Leaderboards]
+      summary: Ranking de resenas.
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          $ref: "#/components/responses/GenericObjectResponse"
+  /api/leaderboards/comments:
+    get:
+      tags: [Leaderboards]
+      summary: Ranking de comentarios.
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          $ref: "#/components/responses/GenericObjectResponse"
+
+  /api/friends/user/{authId}/summary:
+    get:
+      tags: [Friends]
+      summary: Obtiene resumen publico de amistades.
+      parameters:
+        - $ref: "#/components/parameters/AuthId"
+      responses:
+        "200":
+          $ref: "#/components/responses/GenericObjectResponse"
+  /api/friends/user/{authId}:
+    get:
+      tags: [Friends]
+      summary: Lista amigos publicos de un usuario.
+      parameters:
+        - $ref: "#/components/parameters/AuthId"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          $ref: "#/components/responses/PaginatedDataResponse"
+  /api/friends/requests:
+    post:
+      tags: [Friends]
+      summary: Envia una solicitud de amistad.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [receiverAuthId]
+              properties:
+                receiverAuthId:
+                  type: string
+      responses:
+        "201":
+          $ref: "#/components/responses/DataResponse"
+  /api/friends/requests/incoming:
+    get:
+      tags: [Friends]
+      summary: Lista solicitudes recibidas.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          $ref: "#/components/responses/PaginatedDataResponse"
+  /api/friends/requests/outgoing:
+    get:
+      tags: [Friends]
+      summary: Lista solicitudes enviadas.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          $ref: "#/components/responses/PaginatedDataResponse"
+  /api/friends/requests/{requestId}/accept:
+    put:
+      tags: [Friends]
+      summary: Acepta una solicitud.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/friends/requests/{requestId}/reject:
+    put:
+      tags: [Friends]
+      summary: Rechaza una solicitud.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/friends/requests/{requestId}:
+    delete:
+      tags: [Friends]
+      summary: Cancela una solicitud enviada.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/RequestId"
+      responses:
+        "200":
+          $ref: "#/components/responses/MessageResponse"
+  /api/friends:
+    get:
+      tags: [Friends]
+      summary: Lista amigos del usuario autenticado.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          $ref: "#/components/responses/PaginatedDataResponse"
+  /api/friends/{otherAuthId}/status:
+    get:
+      tags: [Friends]
+      summary: Obtiene estado de relacion con otro usuario.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: otherAuthId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/GenericObjectResponse"
+  /api/friends/{friendAuthId}:
+    delete:
+      tags: [Friends]
+      summary: Elimina una amistad.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: friendAuthId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/MessageResponse"
+
+  /api/moderation/reports:
+    post:
+      tags: [Moderation]
+      summary: Crea un reporte de moderacion.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportCreate"
+      responses:
+        "201":
+          $ref: "#/components/responses/DataResponse"
+  /api/moderation/reports/my:
+    get:
+      tags: [Moderation]
+      summary: Lista reportes creados por el usuario autenticado.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/moderation/admin/reports:
+    get:
+      tags: [Moderation]
+      summary: Lista reportes para administracion.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: targetType
+          in: query
+          schema:
+            type: string
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/moderation/admin/stats:
+    get:
+      tags: [Moderation]
+      summary: Obtiene estadisticas de moderacion.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/moderation/admin/reports/{reportId}:
+    get:
+      tags: [Moderation]
+      summary: Obtiene un reporte por id.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ReportId"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/moderation/admin/reports/{reportId}/dismiss:
+    post:
+      tags: [Moderation]
+      summary: Descarta un reporte.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ReportId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                note:
+                  type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/moderation/admin/reports/{reportId}/actions:
+    post:
+      tags: [Moderation]
+      summary: Ejecuta accion de moderacion.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ReportId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [actionType]
+              properties:
+                actionType:
+                  type: string
+                  enum: [DELETE_REVIEW, DELETE_COMMENT, SUSPEND_USER, BAN_USER, DISMISS_REPORT]
+                note:
+                  type: string
+                duration:
+                  type: integer
+                  description: Duracion en dias para suspensiones.
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+
+  /api/notifications:
+    get:
+      tags: [Notifications]
+      summary: Lista notificaciones del usuario autenticado.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [all, read, unread]
+            default: all
+        - name: type
+          in: query
+          schema:
+            type: string
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          $ref: "#/components/responses/PaginatedDataResponse"
+    post:
+      tags: [Notifications]
+      summary: Crea una notificacion.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationCreate"
+      responses:
+        "201":
+          $ref: "#/components/responses/DataResponse"
+  /api/notifications/unread-count:
+    get:
+      tags: [Notifications]
+      summary: Cuenta notificaciones no leidas.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Conteo de no leidas.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unreadCount:
+                    type: integer
+  /api/notifications/read-all:
+    put:
+      tags: [Notifications]
+      summary: Marca todas las notificaciones como leidas.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Notificaciones actualizadas.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/MessageEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Notification"
+                      updated:
+                        type: integer
+  /api/notifications/{notificationId}/read:
+    put:
+      tags: [Notifications]
+      summary: Marca una notificacion como leida.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/NotificationId"
+      responses:
+        "200":
+          $ref: "#/components/responses/DataResponse"
+  /api/notifications/{notificationId}:
+    delete:
+      tags: [Notifications]
+      summary: Elimina una notificacion.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/NotificationId"
+      responses:
+        "200":
+          $ref: "#/components/responses/MessageResponse"
+
+  /health:
+    get:
+      tags: [Media]
+      summary: Verifica el estado del servicio HTTP donde aplique.
+      responses:
+        "200":
+          $ref: "#/components/responses/MessageResponse"
+  /media/{fileName}:
+    get:
+      tags: [Media]
+      summary: Sirve un archivo estatico subido por ms-media.
+      parameters:
+        - name: fileName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Archivo multimedia.
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Archivo no encontrado.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    AuthId:
+      name: authId
+      in: path
+      required: true
+      schema:
+        type: string
+    TvmazeId:
+      name: tvmazeId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    ReviewId:
+      name: reviewId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    CommentId:
+      name: commentId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    RequestId:
+      name: requestId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    ReportId:
+      name: reportId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    NotificationId:
+      name: notificationId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    SeasonNumber:
+      name: seasonNumber
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    SearchQuery:
+      name: q
+      in: query
+      required: true
+      schema:
+        type: string
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageLimit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+  requestBodies:
+    EmailBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email]
+            properties:
+              email:
+                type: string
+                format: email
+    EmailCodeBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email, code]
+            properties:
+              email:
+                type: string
+                format: email
+              code:
+                type: string
+    ReasonBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              reason:
+                type: string
+    TvmazeBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [tvmazeId]
+            properties:
+              tvmazeId:
+                type: integer
+                minimum: 1
+    ImageUploadBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [image]
+            properties:
+              image:
+                type: string
+                format: binary
+  responses:
+    MessageResponse:
+      description: Respuesta con mensaje.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MessageEnvelope"
+    DataResponse:
+      description: Respuesta con mensaje y data.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DataEnvelope"
+    PaginatedDataResponse:
+      description: Respuesta paginada.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PaginatedDataEnvelope"
+    GenericObjectResponse:
+      description: Objeto JSON.
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: true
+    ErrorResponse:
+      description: Error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    EpisodeListResponse:
+      description: Lista de episodios.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              tvmazeId:
+                type: integer
+              episodes:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Episode"
+    ReviewsPageResponse:
+      description: Resenas paginadas.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              reviews:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+              pagination:
+                $ref: "#/components/schemas/Pagination"
+    ReviewObjectResponse:
+      description: Resena.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              review:
+                $ref: "#/components/schemas/Review"
+              message:
+                type: string
+    CommentObjectResponse:
+      description: Comentario.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              comment:
+                $ref: "#/components/schemas/Comment"
+              message:
+                type: string
+  schemas:
+    MessageEnvelope:
+      type: object
+      properties:
+        message:
+          type: string
+    DataEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/MessageEnvelope"
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: true
+              additionalProperties: true
+    PaginatedDataEnvelope:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+        error:
+          type: string
+        data:
+          nullable: true
+          additionalProperties: true
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+    RegisterRequest:
+      type: object
+      required: [email, password, name, username]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        name:
+          type: string
+          minLength: 2
+          maxLength: 40
+        username:
+          type: string
+          minLength: 3
+          maxLength: 30
+        profileImage:
+          type: string
+          format: uri
+          nullable: true
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    LoginResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/AuthUser"
+        token:
+          type: string
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+        role:
+          type: string
+          enum: [USER, ADMIN]
+        accountStatus:
+          type: string
+          enum: [ACTIVE, SUSPENDED, BANNED]
+        emailVerified:
+          type: boolean
+    Show:
+      type: object
+      properties:
+        tvmazeId:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+        language:
+          type: string
+        genres:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+        runtime:
+          type: integer
+          nullable: true
+        averageRuntime:
+          type: integer
+          nullable: true
+        premiered:
+          type: string
+          nullable: true
+        ended:
+          type: string
+          nullable: true
+        officialSite:
+          type: string
+          nullable: true
+        rating:
+          type: object
+          properties:
+            average:
+              type: number
+              nullable: true
+        image:
+          $ref: "#/components/schemas/ImageSet"
+        summary:
+          type: string
+          nullable: true
+    ShowSearchResult:
+      type: object
+      properties:
+        score:
+          type: number
+        show:
+          $ref: "#/components/schemas/Show"
+    Season:
+      type: object
+      properties:
+        tvmazeSeasonId:
+          type: integer
+        tvmazeShowId:
+          type: integer
+        number:
+          type: integer
+        name:
+          type: string
+          nullable: true
+        episodeOrder:
+          type: integer
+          nullable: true
+        premiereDate:
+          type: string
+          nullable: true
+        endDate:
+          type: string
+          nullable: true
+        image:
+          $ref: "#/components/schemas/ImageSet"
+        summary:
+          type: string
+          nullable: true
+    Episode:
+      type: object
+      properties:
+        tvmazeId:
+          type: integer
+        tvmazeShowId:
+          type: integer
+        name:
+          type: string
+        season:
+          type: integer
+        number:
+          type: integer
+        airdate:
+          type: string
+          nullable: true
+        runtime:
+          type: integer
+          nullable: true
+        image:
+          $ref: "#/components/schemas/ImageSet"
+        summary:
+          type: string
+          nullable: true
+    CastMember:
+      type: object
+      properties:
+        person:
+          type: object
+          additionalProperties: true
+        character:
+          type: object
+          additionalProperties: true
+    ImageSet:
+      type: object
+      properties:
+        medium:
+          type: string
+          nullable: true
+        original:
+          type: string
+          nullable: true
+    ReviewCreate:
+      type: object
+      required: [tvmazeId, rating, content]
+      properties:
+        tvmazeId:
+          type: integer
+          minimum: 1
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        title:
+          type: string
+          nullable: true
+        content:
+          type: string
+    ReviewCreateMultipart:
+      allOf:
+        - $ref: "#/components/schemas/ReviewCreate"
+        - type: object
+          properties:
+            image:
+              type: string
+              format: binary
+    ReviewUpdate:
+      type: object
+      required: [rating, content]
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        title:
+          type: string
+          nullable: true
+        content:
+          type: string
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+        auth_id:
+          type: string
+        tvmaze_id:
+          type: integer
+        rating:
+          type: integer
+        title:
+          type: string
+          nullable: true
+        content:
+          type: string
+        image_url:
+          type: string
+          nullable: true
+        likes_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ReviewEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/MessageEnvelope"
+        - type: object
+          properties:
+            review:
+              $ref: "#/components/schemas/Review"
+    CommentCreate:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+    CommentCreateMultipart:
+      allOf:
+        - $ref: "#/components/schemas/CommentCreate"
+        - type: object
+          properties:
+            image:
+              type: string
+              format: binary
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+        review_id:
+          type: integer
+        auth_id:
+          type: string
+        content:
+          type: string
+        image_url:
+          type: string
+          nullable: true
+        likes_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ReportCreate:
+      type: object
+      required: [targetType, targetId, reason]
+      properties:
+        targetType:
+          type: string
+          enum: [REVIEW, COMMENT, USER]
+        targetId:
+          type: string
+        reason:
+          type: string
+        description:
+          type: string
+    NotificationCreate:
+      type: object
+      required: [recipientAuthId, type, title, body]
+      properties:
+        recipientAuthId:
+          type: string
+        actorAuthId:
+          type: string
+          nullable: true
+        type:
+          type: string
+          maxLength: 80
+        title:
+          type: string
+          maxLength: 140
+        body:
+          type: string
+          maxLength: 1000
+        metadata:
+          type: object
+          additionalProperties: true
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        recipient_auth_id:
+          type: string
+        actor_auth_id:
+          type: string
+          nullable: true
+        type:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        read:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time

@@ -1,0 +1,614 @@
+openapi: 3.0.3
+info:
+  title: ReelTrack Reviews API
+  version: 1.0.0
+  description: Contrato OpenAPI del microservicio de resenas, comentarios y rankings.
+servers:
+  - url: http://localhost:3005
+    description: Local ms-reviews
+tags:
+  - name: Reviews
+  - name: Comments
+  - name: Leaderboards
+paths:
+  /health:
+    get:
+      tags:
+        - Reviews
+      summary: Verifica el estado de ms-reviews.
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+  /api/reviews:
+    post:
+      tags:
+        - Reviews
+      summary: Crea una resena para una serie.
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReviewCreateMultipart'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewCreate'
+      responses:
+        '201':
+          description: Resena creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewEnvelope'
+  /api/reviews/show/{tvmazeId}:
+    get:
+      tags:
+        - Reviews
+      summary: Lista resenas por serie.
+      parameters:
+        - $ref: '#/components/parameters/TvmazeId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageLimit'
+      responses:
+        '200':
+          $ref: '#/components/responses/ReviewsPageResponse'
+  /api/reviews/user/{authId}/summary:
+    get:
+      tags:
+        - Reviews
+      summary: Obtiene resumen de resenas de un usuario.
+      parameters:
+        - $ref: '#/components/parameters/AuthId'
+      responses:
+        '200':
+          $ref: '#/components/responses/GenericObjectResponse'
+  /api/reviews/user/{authId}:
+    get:
+      tags:
+        - Reviews
+      summary: Lista resenas de un usuario.
+      parameters:
+        - $ref: '#/components/parameters/AuthId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageLimit'
+      responses:
+        '200':
+          $ref: '#/components/responses/ReviewsPageResponse'
+  /api/reviews/admin/stats:
+    get:
+      tags:
+        - Reviews
+      summary: Obtiene estadisticas administrativas de resenas.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          $ref: '#/components/responses/DataResponse'
+  /api/reviews/{reviewId}:
+    get:
+      tags:
+        - Reviews
+      summary: Obtiene una resena por id.
+      parameters:
+        - $ref: '#/components/parameters/ReviewId'
+      responses:
+        '200':
+          $ref: '#/components/responses/ReviewObjectResponse'
+    put:
+      tags:
+        - Reviews
+      summary: Actualiza una resena.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReviewId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewUpdate'
+      responses:
+        '200':
+          $ref: '#/components/responses/ReviewObjectResponse'
+    delete:
+      tags:
+        - Reviews
+      summary: Elimina una resena.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReviewId'
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+  /api/reviews/{reviewId}/image:
+    post:
+      tags:
+        - Reviews
+      summary: Sube imagen para una resena.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReviewId'
+      requestBody:
+        $ref: '#/components/requestBodies/ImageUploadBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/DataResponse'
+    delete:
+      tags:
+        - Reviews
+      summary: Quita imagen de una resena.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReviewId'
+      responses:
+        '200':
+          $ref: '#/components/responses/DataResponse'
+  /api/reviews/{reviewId}/like:
+    post:
+      tags:
+        - Reviews
+      summary: Da like a una resena.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReviewId'
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+    delete:
+      tags:
+        - Reviews
+      summary: Quita like de una resena.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReviewId'
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+  /api/reviews/{reviewId}/likes:
+    get:
+      tags:
+        - Reviews
+      summary: Cuenta likes de una resena.
+      parameters:
+        - $ref: '#/components/parameters/ReviewId'
+      responses:
+        '200':
+          $ref: '#/components/responses/GenericObjectResponse'
+  /api/reviews/{reviewId}/comments:
+    post:
+      tags:
+        - Comments
+      summary: Crea comentario en una resena.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ReviewId'
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CommentCreateMultipart'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        '201':
+          $ref: '#/components/responses/CommentObjectResponse'
+    get:
+      tags:
+        - Comments
+      summary: Lista comentarios de una resena.
+      parameters:
+        - $ref: '#/components/parameters/ReviewId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageLimit'
+      responses:
+        '200':
+          description: Comentarios paginados.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Comment'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+  /api/comments/{commentId}:
+    get:
+      tags:
+        - Comments
+      summary: Obtiene un comentario por id.
+      parameters:
+        - $ref: '#/components/parameters/CommentId'
+      responses:
+        '200':
+          $ref: '#/components/responses/CommentObjectResponse'
+    put:
+      tags:
+        - Comments
+      summary: Actualiza un comentario.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CommentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        '200':
+          $ref: '#/components/responses/CommentObjectResponse'
+    delete:
+      tags:
+        - Comments
+      summary: Elimina un comentario.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CommentId'
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+  /api/comments/{commentId}/image:
+    post:
+      tags:
+        - Comments
+      summary: Sube imagen para comentario.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CommentId'
+      requestBody:
+        $ref: '#/components/requestBodies/ImageUploadBody'
+      responses:
+        '200':
+          $ref: '#/components/responses/DataResponse'
+    delete:
+      tags:
+        - Comments
+      summary: Quita imagen de comentario.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CommentId'
+      responses:
+        '200':
+          $ref: '#/components/responses/DataResponse'
+  /api/comments/{commentId}/like:
+    post:
+      tags:
+        - Comments
+      summary: Da like a un comentario.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CommentId'
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+    delete:
+      tags:
+        - Comments
+      summary: Quita like de un comentario.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CommentId'
+      responses:
+        '200':
+          $ref: '#/components/responses/MessageResponse'
+  /api/comments/{commentId}/likes:
+    get:
+      tags:
+        - Comments
+      summary: Cuenta likes de un comentario.
+      parameters:
+        - $ref: '#/components/parameters/CommentId'
+      responses:
+        '200':
+          $ref: '#/components/responses/GenericObjectResponse'
+  /api/leaderboards/users:
+    get:
+      tags:
+        - Leaderboards
+      summary: Ranking de usuarios.
+      parameters:
+        - $ref: '#/components/parameters/PageLimit'
+      responses:
+        '200':
+          $ref: '#/components/responses/GenericObjectResponse'
+  /api/leaderboards/reviews:
+    get:
+      tags:
+        - Leaderboards
+      summary: Ranking de resenas.
+      parameters:
+        - $ref: '#/components/parameters/PageLimit'
+      responses:
+        '200':
+          $ref: '#/components/responses/GenericObjectResponse'
+  /api/leaderboards/comments:
+    get:
+      tags:
+        - Leaderboards
+      summary: Ranking de comentarios.
+      parameters:
+        - $ref: '#/components/parameters/PageLimit'
+      responses:
+        '200':
+          $ref: '#/components/responses/GenericObjectResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    MessageEnvelope:
+      type: object
+      properties:
+        message:
+          type: string
+    ReviewCreate:
+      type: object
+      required:
+        - tvmazeId
+        - rating
+        - content
+      properties:
+        tvmazeId:
+          type: integer
+          minimum: 1
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        title:
+          type: string
+          nullable: true
+        content:
+          type: string
+    ReviewCreateMultipart:
+      allOf:
+        - $ref: '#/components/schemas/ReviewCreate'
+        - type: object
+          properties:
+            image:
+              type: string
+              format: binary
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+        auth_id:
+          type: string
+        tvmaze_id:
+          type: integer
+        rating:
+          type: integer
+        title:
+          type: string
+          nullable: true
+        content:
+          type: string
+        image_url:
+          type: string
+          nullable: true
+        likes_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ReviewEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/MessageEnvelope'
+        - type: object
+          properties:
+            review:
+              $ref: '#/components/schemas/Review'
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+    DataEnvelope:
+      allOf:
+        - $ref: '#/components/schemas/MessageEnvelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: true
+              additionalProperties: true
+    ReviewUpdate:
+      type: object
+      required:
+        - rating
+        - content
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        title:
+          type: string
+          nullable: true
+        content:
+          type: string
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+        review_id:
+          type: integer
+        auth_id:
+          type: string
+        content:
+          type: string
+        image_url:
+          type: string
+          nullable: true
+        likes_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CommentCreate:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+    CommentCreateMultipart:
+      allOf:
+        - $ref: '#/components/schemas/CommentCreate'
+        - type: object
+          properties:
+            image:
+              type: string
+              format: binary
+  responses:
+    MessageResponse:
+      description: Respuesta con mensaje.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MessageEnvelope'
+    ReviewsPageResponse:
+      description: Resenas paginadas.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              reviews:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+              pagination:
+                $ref: '#/components/schemas/Pagination'
+    GenericObjectResponse:
+      description: Objeto JSON.
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: true
+    DataResponse:
+      description: Respuesta con mensaje y data.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DataEnvelope'
+    ReviewObjectResponse:
+      description: Resena.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              review:
+                $ref: '#/components/schemas/Review'
+              message:
+                type: string
+    CommentObjectResponse:
+      description: Comentario.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              comment:
+                $ref: '#/components/schemas/Comment'
+              message:
+                type: string
+  parameters:
+    TvmazeId:
+      name: tvmazeId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageLimit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+    AuthId:
+      name: authId
+      in: path
+      required: true
+      schema:
+        type: string
+    ReviewId:
+      name: reviewId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    CommentId:
+      name: commentId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+  requestBodies:
+    ImageUploadBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required:
+              - image
+            properties:
+              image:
+                type: string
+                format: binary

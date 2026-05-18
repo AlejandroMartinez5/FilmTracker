@@ -1,0 +1,44 @@
+openapi: 3.0.3
+info:
+  title: ReelTrack Friends API
+  version: 1.0.0
+  description: Contrato OpenAPI del microservicio de amistades.
+servers:
+  - url: http://localhost:3006
+    description: Local ms-friends
+tags:
+  - name: Friends
+paths:
+  /health:
+    get:
+      tags: [Friends]
+      summary: Verifica el estado de ms-friends.
+      responses:
+        "200":
+          $ref: "../../docs/openapi.yaml#/components/responses/MessageResponse"
+  /api/friends/user/{authId}/summary:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1friends~1user~1{authId}~1summary"
+  /api/friends/user/{authId}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1friends~1user~1{authId}"
+  /api/friends/requests:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1friends~1requests"
+  /api/friends/requests/incoming:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1friends~1requests~1incoming"
+  /api/friends/requests/outgoing:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1friends~1requests~1outgoing"
+  /api/friends/requests/{requestId}/accept:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1friends~1requests~1{requestId}~1accept"
+  /api/friends/requests/{requestId}/reject:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1friends~1requests~1{requestId}~1reject"
+  /api/friends/requests/{requestId}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1friends~1requests~1{requestId}"
+  /api/friends:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1friends"
+  /api/friends/{otherAuthId}/status:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1friends~1{otherAuthId}~1status"
+  /api/friends/{friendAuthId}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1friends~1{friendAuthId}"
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: "../../docs/openapi.yaml#/components/securitySchemes/bearerAuth"

@@ -1,0 +1,44 @@
+openapi: 3.0.3
+info:
+  title: ReelTrack Shows API
+  version: 1.0.0
+  description: Contrato OpenAPI del microservicio de series y catalogo TVmaze.
+servers:
+  - url: http://localhost:3001
+    description: Local ms-shows
+tags:
+  - name: Shows
+paths:
+  /:
+    get:
+      tags: [Shows]
+      summary: Verifica el estado de ms-shows.
+      responses:
+        "200":
+          description: Servicio funcionando.
+          content:
+            text/plain:
+              schema:
+                type: string
+  /api/shows/search:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1shows~1search"
+  /api/shows/home:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1shows~1home"
+  /api/shows/by-genre/{genre}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1shows~1by-genre~1{genre}"
+  /api/shows/{tvmazeId}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1shows~1{tvmazeId}"
+  /api/shows/{tvmazeId}/full:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1shows~1{tvmazeId}~1full"
+  /api/shows/{tvmazeId}/seasons:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1shows~1{tvmazeId}~1seasons"
+  /api/shows/{tvmazeId}/seasons/{seasonNumber}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1shows~1{tvmazeId}~1seasons~1{seasonNumber}"
+  /api/shows/{tvmazeId}/seasons/{seasonNumber}/episodes:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1shows~1{tvmazeId}~1seasons~1{seasonNumber}~1episodes"
+  /api/shows/{tvmazeId}/seasons/{seasonNumber}/episodes/{episodeNumber}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1shows~1{tvmazeId}~1seasons~1{seasonNumber}~1episodes~1{episodeNumber}"
+  /api/shows/{tvmazeId}/episodes:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1shows~1{tvmazeId}~1episodes"
+  /api/shows/{tvmazeId}/cast:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1shows~1{tvmazeId}~1cast"

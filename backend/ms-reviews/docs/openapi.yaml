@@ -1,0 +1,58 @@
+openapi: 3.0.3
+info:
+  title: ReelTrack Reviews API
+  version: 1.0.0
+  description: Contrato OpenAPI del microservicio de resenas, comentarios y rankings.
+servers:
+  - url: http://localhost:3005
+    description: Local ms-reviews
+tags:
+  - name: Reviews
+  - name: Comments
+  - name: Leaderboards
+paths:
+  /health:
+    get:
+      tags: [Reviews]
+      summary: Verifica el estado de ms-reviews.
+      responses:
+        "200":
+          $ref: "../../docs/openapi.yaml#/components/responses/MessageResponse"
+  /api/reviews:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1reviews"
+  /api/reviews/show/{tvmazeId}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1reviews~1show~1{tvmazeId}"
+  /api/reviews/user/{authId}/summary:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1reviews~1user~1{authId}~1summary"
+  /api/reviews/user/{authId}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1reviews~1user~1{authId}"
+  /api/reviews/admin/stats:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1reviews~1admin~1stats"
+  /api/reviews/{reviewId}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1reviews~1{reviewId}"
+  /api/reviews/{reviewId}/image:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1reviews~1{reviewId}~1image"
+  /api/reviews/{reviewId}/like:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1reviews~1{reviewId}~1like"
+  /api/reviews/{reviewId}/likes:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1reviews~1{reviewId}~1likes"
+  /api/reviews/{reviewId}/comments:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1reviews~1{reviewId}~1comments"
+  /api/comments/{commentId}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1comments~1{commentId}"
+  /api/comments/{commentId}/image:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1comments~1{commentId}~1image"
+  /api/comments/{commentId}/like:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1comments~1{commentId}~1like"
+  /api/comments/{commentId}/likes:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1comments~1{commentId}~1likes"
+  /api/leaderboards/users:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1leaderboards~1users"
+  /api/leaderboards/reviews:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1leaderboards~1reviews"
+  /api/leaderboards/comments:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1leaderboards~1comments"
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: "../../docs/openapi.yaml#/components/securitySchemes/bearerAuth"

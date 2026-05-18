@@ -1,0 +1,43 @@
+openapi: 3.0.3
+info:
+  title: ReelTrack Auth API
+  version: 1.0.0
+  description: Contrato OpenAPI del microservicio de autenticacion.
+servers:
+  - url: http://localhost:3003
+    description: Local ms-auth
+tags:
+  - name: Auth
+paths:
+  /api/auth/health:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1auth~1health"
+  /api/auth/register:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1auth~1register"
+  /api/auth/login:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1auth~1login"
+  /api/auth/verify-email:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1auth~1verify-email"
+  /api/auth/resend-verification:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1auth~1resend-verification"
+  /api/auth/forgot-password:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1auth~1forgot-password"
+  /api/auth/reset-password:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1auth~1reset-password"
+  /api/auth/change-password:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1auth~1change-password"
+  /api/auth/username:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1auth~1username"
+  /api/auth/admin/stats:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1auth~1admin~1stats"
+  /api/auth/admin/users/{authId}/status:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1auth~1admin~1users~1{authId}~1status"
+  /api/auth/admin/users/{authId}/suspend:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1auth~1admin~1users~1{authId}~1suspend"
+  /api/auth/admin/users/{authId}/ban:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1auth~1admin~1users~1{authId}~1ban"
+  /api/auth/admin/users/{authId}/unban:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1auth~1admin~1users~1{authId}~1unban"
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: "../../docs/openapi.yaml#/components/securitySchemes/bearerAuth"

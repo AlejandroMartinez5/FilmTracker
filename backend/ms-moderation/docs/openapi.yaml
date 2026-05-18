@@ -1,0 +1,36 @@
+openapi: 3.0.3
+info:
+  title: ReelTrack Moderation API
+  version: 1.0.0
+  description: Contrato OpenAPI del microservicio de moderacion.
+servers:
+  - url: http://localhost:3007
+    description: Local ms-moderation
+tags:
+  - name: Moderation
+paths:
+  /health:
+    get:
+      tags: [Moderation]
+      summary: Verifica el estado de ms-moderation.
+      responses:
+        "200":
+          $ref: "../../docs/openapi.yaml#/components/responses/MessageResponse"
+  /api/moderation/reports:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1moderation~1reports"
+  /api/moderation/reports/my:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1moderation~1reports~1my"
+  /api/moderation/admin/reports:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1moderation~1admin~1reports"
+  /api/moderation/admin/stats:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1moderation~1admin~1stats"
+  /api/moderation/admin/reports/{reportId}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1moderation~1admin~1reports~1{reportId}"
+  /api/moderation/admin/reports/{reportId}/dismiss:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1moderation~1admin~1reports~1{reportId}~1dismiss"
+  /api/moderation/admin/reports/{reportId}/actions:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1moderation~1admin~1reports~1{reportId}~1actions"
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: "../../docs/openapi.yaml#/components/securitySchemes/bearerAuth"

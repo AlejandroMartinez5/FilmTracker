@@ -1,0 +1,15 @@
+openapi: 3.0.3
+info:
+  title: ReelTrack Media API
+  version: 1.0.0
+  description: Contrato OpenAPI del endpoint HTTP del microservicio de media.
+servers:
+  - url: http://localhost:3010
+    description: Local ms-media HTTP
+tags:
+  - name: Media
+paths:
+  /health:
+    $ref: "../../docs/openapi.yaml#/paths/~1health"
+  /media/{fileName}:
+    $ref: "../../docs/openapi.yaml#/paths/~1media~1{fileName}"

@@ -1,0 +1,32 @@
+openapi: 3.0.3
+info:
+  title: ReelTrack Notifications API
+  version: 1.0.0
+  description: Contrato OpenAPI del microservicio de notificaciones.
+servers:
+  - url: http://localhost:3008
+    description: Local ms-notifications
+tags:
+  - name: Notifications
+paths:
+  /health:
+    get:
+      tags: [Notifications]
+      summary: Verifica el estado de ms-notifications.
+      responses:
+        "200":
+          $ref: "../../docs/openapi.yaml#/components/responses/MessageResponse"
+  /api/notifications:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1notifications"
+  /api/notifications/unread-count:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1notifications~1unread-count"
+  /api/notifications/read-all:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1notifications~1read-all"
+  /api/notifications/{notificationId}/read:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1notifications~1{notificationId}~1read"
+  /api/notifications/{notificationId}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1notifications~1{notificationId}"
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: "../../docs/openapi.yaml#/components/securitySchemes/bearerAuth"

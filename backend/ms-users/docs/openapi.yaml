@@ -1,0 +1,33 @@
+openapi: 3.0.3
+info:
+  title: ReelTrack Users API
+  version: 1.0.0
+  description: Contrato OpenAPI del microservicio de perfiles de usuario.
+servers:
+  - url: http://localhost:3002
+    description: Local ms-users
+tags:
+  - name: Users
+paths:
+  /api/users/health:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1users~1health"
+  /api/users/search:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1users~1search"
+  /api/users/admin/search:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1users~1admin~1search"
+  /api/users/admin/users/{authId}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1users~1admin~1users~1{authId}"
+  /api/users/profile:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1users~1profile"
+  /api/users/profile/photo:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1users~1profile~1photo"
+  /api/users/admin/users/{authId}/profile-photo:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1users~1admin~1users~1{authId}~1profile-photo"
+  /api/users/id/{authId}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1users~1id~1{authId}"
+  /api/users/{username}:
+    $ref: "../../docs/openapi.yaml#/paths/~1api~1users~1{username}"
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: "../../docs/openapi.yaml#/components/securitySchemes/bearerAuth"

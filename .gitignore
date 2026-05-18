@@ -5,3 +5,7 @@ src/keys/public.key
 public.key
 private.key
 package-lock.json
+backend/**/docs/api-docs.html
+backend/**/docs/openapi.bundle.yaml
+backend/**/docs/openapi.yaml
+backend/**/docs/openapi.json
